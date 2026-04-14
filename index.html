@@ -2762,13 +2762,13 @@ function setView(view) {
   if (legend) {
     if (view === 'growth') {
       legend.style.display = 'block';
-      legend.innerHTML = '<span style="color:#4caf50;font-weight:600;">\u2192 Growth</span> &mdash; Under security, each type moves toward the positive traits of their arrow target. <span style="opacity:0.5;">Dim lines = types not on your team.</span>';
+      legend.innerHTML = '<span style="color:#4caf50;font-weight:600;">\u2192 Growth</span> &mdash; Under security, each type moves toward the positive traits of their arrow target. Brighter nodes = more team members grow toward that type.';
     } else if (view === 'stress') {
       legend.style.display = 'block';
-      legend.innerHTML = '<span style="color:#e53935;font-weight:600;">\u2192 Stress</span> &mdash; Under pressure, each type takes on the less healthy traits of their arrow target. <span style="opacity:0.5;">Dim lines = types not on your team.</span>';
+      legend.innerHTML = '<span style="color:#e53935;font-weight:600;">\u2192 Stress</span> &mdash; Under pressure, each type takes on the less healthy traits of their arrow target. Brighter nodes = more team members stress toward that type.';
     } else if (view === 'all') {
       legend.style.display = 'block';
-      legend.innerHTML = '<span style="color:#4caf50;font-weight:600;">\u2192 Growth</span> (solid) &nbsp;&nbsp; <span style="color:#e53935;font-weight:600;">\u2192 Stress</span> (dashed) &nbsp;&nbsp; <span style="opacity:0.5;">Bright = your team\'s types</span>';
+      legend.innerHTML = '<span style="color:#4caf50;font-weight:600;">\u2192 Growth</span> (solid) &nbsp;&nbsp; <span style="color:#e53935;font-weight:600;">\u2192 Stress</span> (dashed) &nbsp;&nbsp; Node glow = how many arrows point there. <span style="color:#ff9800;">Orange</span> = equal growth &amp; stress.';
     } else {
       legend.style.display = 'none';
     }
@@ -2889,6 +2889,25 @@ function drawEnneagram() {
     drawDirectionalLines(STRESS_LINES, '#e53935', [8, 4], false);
   }
 
+  // Build heatmap: count incoming arrows from team types for each target type
+  var heatmap = {};
+  var maxHeat = 0;
+  for (var h = 1; h <= 9; h++) heatmap[h] = { growth: 0, stress: 0, total: 0 };
+
+  if (currentView === 'growth' || currentView === 'all') {
+    GROWTH_LINES.forEach(function(pair) {
+      if (teamTypes[pair[0]]) { heatmap[pair[1]].growth++; heatmap[pair[1]].total++; }
+    });
+  }
+  if (currentView === 'stress' || currentView === 'all') {
+    STRESS_LINES.forEach(function(pair) {
+      if (teamTypes[pair[0]]) { heatmap[pair[1]].stress++; heatmap[pair[1]].total++; }
+    });
+  }
+  for (var h2 = 1; h2 <= 9; h2++) { if (heatmap[h2].total > maxHeat) maxHeat = heatmap[h2].total; }
+
+  var showHeat = currentView !== 'distribution' && maxHeat > 0;
+
   // Nodes
   for (var i = 1; i <= 9; i++) {
     var p = pos(i);
@@ -2897,39 +2916,90 @@ function drawEnneagram() {
     var baseR = 32;
     var r = baseR + count * 8;
 
-    if (count > 0) {
+    var heat = heatmap[i].total;
+    var heatIntensity = showHeat && maxHeat > 0 ? heat / maxHeat : 0;
+
+    // Heat glow — concentric rings that intensify with more incoming arrows
+    if (showHeat && heat > 0) {
+      var heatColor = heatmap[i].growth > heatmap[i].stress ? '#4caf50' : '#e53935';
+      if (currentView === 'all' && heatmap[i].growth === heatmap[i].stress) heatColor = '#ff9800';
+
+      // Outer glow
+      var glowR = r + 12 + heatIntensity * 20;
+      var grad = ctx.createRadialGradient(p.x, p.y, r, p.x, p.y, glowR);
+      grad.addColorStop(0, heatColor + Math.round(heatIntensity * 100).toString(16).padStart(2, '0'));
+      grad.addColorStop(1, heatColor + '00');
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, glowR, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Pulsing ring
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r + 4 + heatIntensity * 6, 0, Math.PI * 2);
+      ctx.strokeStyle = heatColor;
+      ctx.lineWidth = 1.5 + heatIntensity * 2;
+      ctx.globalAlpha = 0.3 + heatIntensity * 0.5;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    } else if (count > 0 && !showHeat) {
       ctx.beginPath();
       ctx.arc(p.x, p.y, r + 8, 0, Math.PI * 2);
       ctx.fillStyle = td.color + '33';
       ctx.fill();
     }
 
+    // Node fill — brighter when heat is high
     ctx.beginPath();
     ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+    if (showHeat) {
+      var dimAmount = heat === 0 ? 0.3 : 1;
+      ctx.globalAlpha = dimAmount;
+    }
     ctx.fillStyle = count > 0 ? td.color : '#2e3347';
     ctx.fill();
     ctx.strokeStyle = td.color;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = showHeat && heat > 0 ? 2 + heatIntensity * 2 : 2;
     ctx.stroke();
+    ctx.globalAlpha = 1;
 
-    ctx.fillStyle = count > 0 ? '#fff' : td.color;
+    // Type number
+    ctx.fillStyle = count > 0 ? '#fff' : (showHeat && heat === 0 ? '#555' : td.color);
     ctx.font = 'bold ' + (r > 36 ? 28 : 22) + 'px -apple-system, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(String(i), p.x, p.y - (count > 0 ? 6 : 0));
 
+    // Member count
     if (count > 0) {
       ctx.font = '16px -apple-system, sans-serif';
       ctx.fillStyle = 'rgba(255,255,255,0.8)';
       ctx.fillText(String(count), p.x, p.y + 14);
     }
 
+    // Heat badge — shows number of incoming arrows
+    if (showHeat && heat > 0) {
+      var badgeX = p.x + r * 0.7;
+      var badgeY = p.y - r * 0.7;
+      var badgeR = 12;
+      var badgeColor = heatmap[i].growth > heatmap[i].stress ? '#4caf50' : '#e53935';
+      if (currentView === 'all' && heatmap[i].growth === heatmap[i].stress) badgeColor = '#ff9800';
+      ctx.beginPath();
+      ctx.arc(badgeX, badgeY, badgeR, 0, Math.PI * 2);
+      ctx.fillStyle = badgeColor;
+      ctx.fill();
+      ctx.font = 'bold 13px -apple-system, sans-serif';
+      ctx.fillStyle = '#fff';
+      ctx.fillText(String(heat), badgeX, badgeY);
+    }
+
+    // Label
     var labelAngle = TYPE_ANGLES[i] * Math.PI / 180;
     var labelR = radius + 55;
     var lx = cx + labelR * Math.cos(labelAngle);
     var ly = cy + labelR * Math.sin(labelAngle);
     ctx.font = '14px -apple-system, sans-serif';
-    ctx.fillStyle = '#8b8fa3';
+    ctx.fillStyle = showHeat && heat === 0 ? '#555' : '#8b8fa3';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(td.name, lx, ly);
