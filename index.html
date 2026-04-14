@@ -1,0 +1,2569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enneagram Team Dashboard</title>
+<style>
+/* ===== CSS Variables / Dark Theme ===== */
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface2: #232736;
+  --border: #2e3347;
+  --text: #e4e6f0;
+  --text-dim: #8b8fa3;
+  --accent: #6c63ff;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ===== Header ===== */
+.app-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.app-header h1 { font-size: 20px; font-weight: 600; }
+.header-actions { display: flex; gap: 8px; }
+
+/* ===== Buttons ===== */
+button, .btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: opacity 0.15s;
+}
+button:hover, .btn:hover { opacity: 0.85; }
+button.secondary { background: var(--surface2); border: 1px solid var(--border); }
+button.danger { background: #e53935; }
+button.small { padding: 4px 10px; font-size: 12px; }
+
+/* ===== Page Tabs ===== */
+.page-tabs {
+  display: flex;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  gap: 0;
+}
+.page-tab {
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-dim);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+  background: none;
+  border-radius: 0;
+}
+.page-tab:hover { color: var(--text); }
+.page-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ===== Tab Content ===== */
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ===== Tab 1: Team Dashboard Layout ===== */
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr 340px;
+  gap: 0;
+  height: calc(100vh - 100px);
+  overflow: hidden;
+}
+.panel {
+  padding: 16px;
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+}
+.panel:last-child { border-right: none; }
+.panel h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+
+/* ===== Add Participant Form ===== */
+.add-form { margin-bottom: 20px; }
+.add-form label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+  margin-top: 10px;
+}
+.add-form input, .add-form select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 13px;
+}
+.add-form input:focus, .add-form select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.scores-toggle {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--accent);
+  cursor: pointer;
+}
+.scores-toggle:hover { text-decoration: underline; }
+.scores-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 8px;
+}
+.scores-grid .score-input {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.scores-grid .score-input label {
+  font-size: 11px;
+  margin: 0;
+  min-width: 14px;
+  text-align: center;
+  color: var(--text-dim);
+}
+.scores-grid .score-input input {
+  width: 48px;
+  padding: 4px 6px;
+  font-size: 12px;
+  text-align: center;
+}
+.add-form button { margin-top: 12px; width: 100%; }
+
+/* ===== Participant List ===== */
+.participant-list { margin-bottom: 20px; }
+.participant-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: var(--surface2);
+  border-radius: 6px;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+.participant-item .p-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.type-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.participant-item .remove-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 2px 6px;
+  font-size: 14px;
+  line-height: 1;
+  border-radius: 4px;
+}
+.participant-item .remove-btn:hover {
+  color: #e53935;
+  background: rgba(229,57,53,0.1);
+}
+
+/* ===== Team Stats ===== */
+.stat-card {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+.stat-card h4 {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 3px 0;
+}
+.stat-row .stat-val { font-weight: 600; }
+.center-card {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+}
+.center-card .center-name { font-size: 13px; font-weight: 600; }
+.center-card .center-info { font-size: 12px; color: var(--text-dim); }
+
+/* ===== Center Panel (Diagram) ===== */
+.center-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 16px;
+  overflow-y: auto;
+}
+.view-toggle {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.view-toggle button {
+  font-size: 12px;
+  padding: 6px 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+}
+.view-toggle button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+canvas#enneagramCanvas {
+  border-radius: 8px;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+/* ===== Right Panel: Type Cards ===== */
+.type-card {
+  background: var(--surface2);
+  border-radius: 8px;
+  border-left: 3px solid var(--border);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.type-card:hover { background: var(--surface); }
+.type-card.expanded { background: var(--surface); }
+.type-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.type-card-header .type-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.type-card-body {
+  display: none;
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+.type-card.expanded .type-card-body { display: block; }
+.type-card-body .detail-section { margin-bottom: 8px; }
+.type-card-body .detail-label {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+
+/* ===== Dynamics Section ===== */
+.dynamics-section { margin-top: 16px; }
+.dynamics-card {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border-left: 3px solid var(--border);
+}
+.dynamics-card.complement { border-left-color: #4caf50; }
+.dynamics-card.challenge { border-left-color: #ff9800; }
+.dynamics-card.stress { border-left-color: #e53935; }
+.dynamics-card.growth { border-left-color: #4db6ac; }
+.dynamics-card .dyn-header {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.dynamics-card .dyn-tag {
+  display: inline-block;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-left: 6px;
+}
+.dynamics-card .dyn-tag.complement { background: rgba(76,175,80,0.2); color: #4caf50; }
+.dynamics-card .dyn-tag.challenge { background: rgba(255,152,0,0.2); color: #ff9800; }
+.dynamics-card .dyn-tag.stress { background: rgba(229,57,53,0.2); color: #e53935; }
+.dynamics-card .dyn-tag.growth { background: rgba(77,182,172,0.2); color: #4db6ac; }
+.dynamics-card .dyn-body { font-size: 12px; color: var(--text-dim); }
+
+/* ===== Export/Import ===== */
+.io-section {
+  margin-top: 16px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* ===== Tab 2: Type Guide ===== */
+.guide-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px;
+}
+.guide-nav {
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 10;
+  display: flex;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.guide-nav a {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--text-dim);
+  padding: 4px 10px;
+  border-radius: 20px;
+  transition: background 0.15s;
+}
+.guide-nav a:hover {
+  background: var(--surface2);
+  color: var(--text);
+  text-decoration: none;
+}
+.guide-nav .nav-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* Guide Type Section */
+.guide-type {
+  margin-bottom: 48px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--border);
+}
+.guide-type:last-child { border-bottom: none; }
+.guide-type-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.guide-type-num {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 800;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+.guide-type-header h2 { font-size: 24px; font-weight: 700; }
+.guide-type-header .subtitle { font-size: 14px; color: var(--text-dim); }
+.guide-section { margin-bottom: 20px; }
+.guide-section h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+.guide-box {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 16px;
+}
+.guide-callout {
+  border-radius: 8px;
+  padding: 16px;
+  border-left: 4px solid;
+}
+.guide-callout.passion {
+  border-left-color: #e57373;
+  background: rgba(229,115,115,0.08);
+}
+.guide-callout.hidden {
+  border-left-color: var(--text-dim);
+  background: var(--surface2);
+}
+.guide-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.guide-pair-card {
+  border-radius: 8px;
+  padding: 14px;
+  background: var(--surface2);
+  border-top: 3px solid;
+}
+.guide-pair-card.fear { border-top-color: #e53935; }
+.guide-pair-card.desire { border-top-color: #4caf50; }
+.guide-pair-card h4 { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+
+/* Strengths/Challenges tags */
+.tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag-pill {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* Wings */
+.guide-wing {
+  border-radius: 8px;
+  padding: 14px;
+  background: var(--surface2);
+  border-left: 3px solid;
+}
+
+/* Arrow cards */
+.guide-arrows {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+.guide-arrow-card {
+  border-radius: 8px;
+  padding: 14px;
+  background: var(--surface2);
+  border-top: 3px solid;
+}
+.guide-arrow-card.growth-card { border-top-color: #4caf50; }
+.guide-arrow-card.stress-card { border-top-color: #e53935; }
+.guide-arrow-card.security-card { border-top-color: #ffc107; }
+.guide-arrow-card h4 { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+
+/* Levels stepper */
+.levels-list { list-style: none; }
+.levels-list li {
+  padding: 10px 14px;
+  border-left: 3px solid;
+  margin-bottom: 4px;
+  border-radius: 0 6px 6px 0;
+  background: var(--surface2);
+  font-size: 13px;
+}
+.levels-list li.healthy { border-left-color: #4caf50; }
+.levels-list li.average { border-left-color: #ffc107; }
+.levels-list li.unhealthy { border-left-color: #e53935; }
+.level-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-right: 6px;
+  text-transform: uppercase;
+}
+.level-badge.healthy { background: rgba(76,175,80,0.15); color: #4caf50; }
+.level-badge.average { background: rgba(255,193,7,0.15); color: #ffc107; }
+.level-badge.unhealthy { background: rgba(229,57,53,0.15); color: #e53935; }
+
+/* Phobic/Counterphobic */
+.phobic-callout {
+  background: rgba(255,138,101,0.1);
+  border: 1px solid rgba(255,138,101,0.3);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+/* Relationship issues */
+.rel-list, .growth-rec-list { padding-left: 20px; }
+.rel-list li, .growth-rec-list li {
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.growth-rec-list { list-style-type: decimal; }
+
+/* Leadership */
+.leadership-box {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 16px;
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.7;
+}
+
+/* ===== Tab 3: Score Profiles ===== */
+.profiles-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.profiles-container h2 { font-size: 20px; font-weight: 600; margin-bottom: 16px; }
+.radar-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 32px;
+}
+.radar-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+}
+.radar-card h4 { font-size: 14px; margin-bottom: 8px; }
+.radar-card .radar-type { font-size: 12px; color: var(--text-dim); }
+.composite-section { margin-bottom: 32px; text-align: center; }
+.score-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.score-table th, .score-table td {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  text-align: center;
+}
+.score-table th {
+  background: var(--surface2);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+.score-table td { background: var(--surface); }
+.no-scores-msg {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+/* ===== Facilitator Modal ===== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 100;
+  justify-content: center;
+  align-items: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal h2 { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+.modal label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+  margin-top: 10px;
+}
+.modal input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 13px;
+}
+.modal input:focus { outline: none; border-color: var(--accent); }
+.modal-scores-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+.modal-scores-grid .score-input {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.modal-scores-grid .score-input label {
+  margin: 0;
+  min-width: 14px;
+  text-align: center;
+}
+.modal-scores-grid .score-input input {
+  width: 56px;
+  text-align: center;
+}
+.modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+.modal-close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 20px;
+  cursor: pointer;
+}
+.facilitator-result {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--surface2);
+  border-radius: 8px;
+}
+.facilitator-result h4 { font-size: 14px; margin-bottom: 8px; }
+.facilitator-result .fac-type { font-size: 16px; font-weight: 600; }
+
+/* ===== Print Styles ===== */
+@media print {
+  body { background: #fff; color: #000; }
+  .page-tabs, .add-form, button, .header-actions, .view-toggle, canvas { display: none; }
+  .guide-type { break-inside: avoid; page-break-inside: avoid; border: 1px solid #ccc; }
+  .guide-box, .guide-wing, .guide-arrow-card { background: #f5f5f5; }
+}
+
+/* ===== PDF Upload Zone ===== */
+.pdf-upload-zone {
+  border: 2px dashed var(--border); border-radius: 8px; padding: 16px;
+  text-align: center; cursor: pointer; transition: all 0.2s; margin: 8px 0;
+}
+.pdf-upload-zone:hover, .pdf-upload-zone.dragover {
+  border-color: var(--accent); background: rgba(108,99,255,0.08);
+}
+.pdf-upload-icon { font-size: 24px; margin-bottom: 4px; }
+.pdf-upload-text { font-size: 13px; font-weight: 600; color: var(--text); }
+.pdf-upload-hint { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+.pdf-upload-zone.success { border-color: #81c784; background: rgba(129,199,132,0.08); }
+.pdf-upload-zone.error { border-color: #e57373; background: rgba(229,115,115,0.08); }
+
+/* ===== Responsive ===== */
+@media (max-width: 1100px) {
+  .dashboard-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .panel {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .guide-pair, .guide-arrows { grid-template-columns: 1fr; }
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>if(window.pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+</head>
+<body>
+
+<!-- ===== Header ===== -->
+<header class="app-header">
+  <h1>Enneagram Team Dashboard</h1>
+  <div class="header-actions">
+    <button class="secondary" onclick="openFacilitatorModal()">My Profile</button>
+  </div>
+</header>
+
+<!-- ===== Page Tabs ===== -->
+<nav class="page-tabs">
+  <div class="page-tab active" data-tab="dashboard" onclick="switchTab('dashboard')">Team Dashboard</div>
+  <div class="page-tab" data-tab="guide" onclick="switchTab('guide')">Type Guide</div>
+  <div class="page-tab" data-tab="profiles" onclick="switchTab('profiles')">Score Profiles</div>
+</nav>
+
+<!-- ===== Tab 1: Team Dashboard ===== -->
+<div class="tab-content active" id="tab-dashboard">
+  <div class="dashboard-layout">
+    <!-- Left Panel -->
+    <div class="panel" id="left-panel">
+      <h3>Add Participant</h3>
+      <div class="add-form">
+        <label for="pName">Name</label>
+        <input type="text" id="pName" placeholder="Enter name...">
+
+        <label for="pType">Type</label>
+        <select id="pType" onchange="updateWingSelect()">
+          <option value="">-- Auto-detect from scores --</option>
+        </select>
+
+        <label for="pWing">Wing</label>
+        <select id="pWing">
+          <option value="">-- Auto-detect --</option>
+        </select>
+
+        <span class="scores-toggle" onclick="toggleScores()">Enter RHETI Scores</span>
+        <div class="scores-grid" id="scoresGrid" style="display:none;"></div>
+
+        <div class="pdf-upload-zone" id="pdfDropZone" onclick="document.getElementById('pdfFileInput').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="event.preventDefault();this.classList.remove('dragover');handlePdfUpload(event.dataTransfer.files[0])">
+          <div class="pdf-upload-icon">&#x1F4C4;</div>
+          <div class="pdf-upload-text">Upload RHETI PDF</div>
+          <div class="pdf-upload-hint">Click or drag your Enneagram Institute results PDF here</div>
+          <input type="file" id="pdfFileInput" accept=".pdf" style="display:none" onchange="handlePdfUpload(this.files[0]);this.value=''">
+        </div>
+        <div id="pdfStatus" style="display:none;font-size:12px;padding:6px 0;color:var(--accent);"></div>
+
+        <button onclick="addParticipant()">Add Participant</button>
+      </div>
+
+      <h3>Participants</h3>
+      <div id="participantList" class="participant-list"></div>
+
+      <h3>Team Stats</h3>
+      <div id="teamStats"></div>
+
+      <h3>Centers of Intelligence</h3>
+      <div id="centersInfo"></div>
+
+      <div class="io-section">
+        <button class="secondary small" onclick="exportTeam()">Export JSON</button>
+        <button class="secondary small" onclick="document.getElementById('importFile').click()">Import JSON</button>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importTeam(event)">
+      </div>
+    </div>
+
+    <!-- Center Panel -->
+    <div class="panel center-panel">
+      <div class="view-toggle">
+        <button class="active" data-view="distribution" onclick="setView('distribution')">Distribution</button>
+        <button data-view="growth" onclick="setView('growth')">Growth Lines</button>
+        <button data-view="stress" onclick="setView('stress')">Stress Lines</button>
+        <button data-view="all" onclick="setView('all')">All Lines</button>
+      </div>
+      <canvas id="enneagramCanvas" width="1040" height="1040" style="width:520px;height:520px;"></canvas>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="panel" id="right-panel">
+      <h3>Type Details</h3>
+      <div id="typeCards"></div>
+
+      <div class="dynamics-section">
+        <h3>Active Team Dynamics</h3>
+        <div id="dynamicsCards"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Tab 2: Type Guide ===== -->
+<div class="tab-content" id="tab-guide">
+  <div class="guide-container">
+    <nav class="guide-nav" id="guideNav"></nav>
+    <div id="guideContent"></div>
+  </div>
+</div>
+
+<!-- ===== Tab 3: Score Profiles ===== -->
+<div class="tab-content" id="tab-profiles">
+  <div class="profiles-container">
+    <h2>Score Profiles</h2>
+    <div class="composite-section" id="compositeSection"></div>
+    <h3 style="margin-bottom:16px;">Individual Profiles</h3>
+    <div class="radar-grid" id="radarGrid"></div>
+    <h3 style="margin-bottom:16px;">Score Comparison</h3>
+    <div id="scoreTableContainer"></div>
+  </div>
+</div>
+
+<!-- ===== Facilitator Modal ===== -->
+<div class="modal-overlay" id="facilitatorModal">
+  <div class="modal" style="position:relative;">
+    <button class="modal-close" onclick="closeFacilitatorModal()">&times;</button>
+    <h2>My Profile</h2>
+    <label for="facName">Name</label>
+    <input type="text" id="facName" placeholder="Your name...">
+    <label>RHETI Scores</label>
+    <div class="pdf-upload-zone" style="margin-bottom:12px;" onclick="document.getElementById('facPdfInput').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="event.preventDefault();this.classList.remove('dragover');handleFacPdfUpload(event.dataTransfer.files[0])">
+      <div class="pdf-upload-text" style="font-size:12px;">Upload RHETI PDF or enter scores below</div>
+      <input type="file" id="facPdfInput" accept=".pdf" style="display:none" onchange="handleFacPdfUpload(this.files[0]);this.value=''">
+    </div>
+    <div id="facPdfStatus" style="display:none;font-size:12px;padding:4px 0;color:var(--accent);"></div>
+    <div class="modal-scores-grid" id="facScoresGrid"></div>
+    <div class="modal-actions">
+      <button onclick="saveFacilitator()">Save Profile</button>
+      <button class="secondary" onclick="closeFacilitatorModal()">Cancel</button>
+    </div>
+    <div class="facilitator-result" id="facResult" style="display:none;">
+      <h4>Your Profile</h4>
+      <div class="fac-type" id="facTypeDisplay"></div>
+      <canvas id="facRadarCanvas" width="600" height="600" style="width:300px;height:300px;margin-top:12px;"></canvas>
+      <div style="margin-top:12px;">
+        <button class="secondary small" id="facShareBtn" onclick="shareFacProfile()">View My Type in Guide</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ========================================================
+   DATA: EXTENDED_TYPE_DATA
+   ======================================================== */
+var EXTENDED_TYPE_DATA = {
+  1: {
+    name: 'The Reformer',
+    color: '#5bc0eb',
+    triad: 'instinctive',
+    subtitle: 'The Rational, Idealistic Type',
+    basicFear: 'Of being corrupt, evil, or defective',
+    basicDesire: 'To be good, to have integrity, to be balanced',
+    keyMotivations: 'Want to be right, to strive higher and improve everything, to be consistent with their ideals, to justify themselves, to be beyond criticism so as not to be condemned by anyone.',
+    desc: 'Ones are conscientious and ethical, with a strong sense of right and wrong. They are teachers, crusaders, and advocates for change\u2014always striving to improve things but afraid of making a mistake.',
+    longDesc: 'Ones are principled, purposeful, self-controlled, and perfectionistic. They have a strong internal critic that constantly measures their actions against an internalized set of standards. At their best, Ones are wise, discerning, realistic, and noble\u2014morally heroic people who put their ideals into practice. They are motivated by the desire to live life the right way, to improve themselves and the world around them, and to avoid fault and blame. Ones feel that they must earn or justify their right to exist through constant effort and self-improvement. They tend to suppress their instinctual drives, especially anger, which leaks out as chronic resentment, impatience, and irritability. The inner critic of the One is relentless, producing a near-constant internal monologue of self-judgment that they also project outward onto others and the environment.',
+    strengths: [
+      'Principled and ethical with strong moral convictions that guide their actions consistently',
+      'Highly organized and detail-oriented, able to see what needs improvement and create systems to achieve it',
+      'Self-disciplined and responsible, following through on commitments even when it is difficult',
+      'Fair-minded and objective, striving to treat everyone equitably and hold themselves to the same standards they expect of others',
+      'Dedicated to quality and excellence, raising the bar for themselves and everyone around them'
+    ],
+    challenges: [
+      'Perfectionistic tendencies that create procrastination, rigidity, and chronic dissatisfaction with results',
+      'Difficulty relaxing and enjoying life because there is always something that could be improved or corrected',
+      'Suppressed anger that emerges as resentment, irritability, sarcasm, and passive-aggressive behavior',
+      'Being overly critical of themselves and others, making people feel judged and inadequate',
+      'Black-and-white thinking that leaves little room for nuance, ambiguity, or spontaneity'
+    ],
+    leadership: 'Ones lead by example and moral authority. They set high standards, create clear processes, and hold everyone\u2014including themselves\u2014accountable. Their integrity inspires trust, but they must guard against micromanaging and creating an atmosphere where people fear making mistakes. The best One leaders learn to balance their drive for improvement with appreciation for what is already working, and they create space for experimentation and imperfection as part of the growth process.',
+    growth: 7,
+    stress: 4,
+    wings: [9, 2],
+    wingDescriptions: {
+      9: 'The One with a Nine wing (1w9) is sometimes called "The Idealist." This subtype tends to be more introverted, detached, and cerebral than the 1w2. They are drawn to philosophical frameworks and abstract principles of right and wrong. Their anger is more likely to be held internally, emerging as quiet resentment or cold withdrawal rather than overt criticism. They can appear calm and reserved on the surface while maintaining fierce internal standards. The Nine wing softens the One\'s rigidity somewhat and adds a desire for inner peace, but it can also make them more emotionally remote and prone to passive resistance when things do not meet their standards.',
+      2: 'The One with a Two wing (1w2) is sometimes called "The Advocate." This subtype is more extroverted, empathetic, and action-oriented. They channel their reforming energy into helping others and championing causes, making them natural teachers, counselors, and activists. Their anger is more likely to emerge openly as righteous indignation on behalf of the less fortunate. They feel a strong personal responsibility to improve the lives of those around them. The Two wing adds warmth and interpersonal engagement, but it can also amplify the One\'s tendency toward self-righteousness and make them more controlling in their desire to "help" others improve.'
+    },
+    growthDesc: 'In growth, Ones move toward the healthy qualities of Type Seven. They learn to lighten up, embrace spontaneity, and find joy in the present moment rather than constantly focusing on what needs to be fixed. They become more open to new experiences, more playful, and more accepting of imperfection\u2014both in themselves and others. The inner critic quiets, replaced by genuine enthusiasm and a sense of abundance. They discover that life does not have to be a constant project of self-improvement and that relaxation and pleasure are not moral failings but essential parts of a well-lived life.',
+    stressDesc: 'Under stress, Ones take on the unhealthy qualities of Type Four. They become moody, irrational, and emotionally volatile\u2014a stark contrast to their usual composure. Their suppressed feelings erupt in bouts of melancholy, self-pity, and a sense that no one understands how hard they are trying. They may become dramatic and temperamental, withdrawing into dark emotions and feeling exempt from the very rules they normally champion. The inner critic turns entirely inward, producing deep feelings of inadequacy and hopelessness rather than the usual drive toward improvement.',
+    securityDesc: 'When Ones feel safe and comfortable, they can move to the average qualities of Type Seven. Rather than accessing Seven\'s healthy joy, they may become scattered, indulgent, and impulsive in ways that surprise those around them. They might overcommit to too many projects, become restless and distracted, or use pleasure-seeking as an escape from their usual self-discipline. This can manifest as binge behavior\u2014overeating, overdrinking, or overworking on fun projects while neglecting responsibilities. It is as though the tightly wound spring of their self-control suddenly releases, and they swing to the opposite extreme without the self-awareness that healthy growth would bring.',
+    passion: 'Anger (Resentment)',
+    passionDesc: 'The passion of the One is anger, specifically experienced as resentment\u2014a chronic, simmering frustration at the imperfection of the world and themselves. Because Ones believe that anger is "wrong" and that good people should not lose their temper, they habitually suppress their anger, which makes it leak out sideways as irritability, impatience, sarcasm, and a tight-lipped disapproval. The irony is that Ones are among the angriest types precisely because they work so hard to not be angry. Their resentment is fueled by the sense that they are the only ones playing by the rules while others get away with being irresponsible, lazy, or morally careless.',
+    hiddenSide: 'Beneath the composed, principled exterior, Ones harbor a secret longing to let go completely\u2014to be wild, spontaneous, and free of their crushing sense of responsibility. Many Ones have a hidden hedonistic streak that emerges in private: they may indulge in guilty pleasures they would never publicly condone, or they fantasize about abandoning all their obligations. The hidden truth of the One is that their rigidity is a defense against the fear that if they relax their standards even slightly, they will descend into chaos and corruption. Their relentless self-improvement is driven not by genuine moral superiority but by a deep, unacknowledged fear that they are fundamentally flawed.',
+    relationshipIssues: [
+      'Criticizing their partner for not meeting their standards, then feeling hurt when the partner becomes defensive or withdrawn, creating a cycle of judgment and distance',
+      'Difficulty expressing needs directly because they believe they should be able to handle everything themselves, leading to resentment when their unspoken expectations go unmet',
+      'Turning small household or logistical disagreements into moral issues, making their partner feel judged for trivial matters like how dishes are loaded or errands are prioritized',
+      'Struggling to receive feedback or admit mistakes because their self-worth is tied to being right, which makes honest communication feel threatening',
+      'Withholding affection or warmth as a subtle punishment when their partner fails to live up to their expectations, even when the partner is unaware of what they did wrong'
+    ],
+    growthRecs: [
+      'Practice noticing your inner critic without obeying it\u2014when you catch yourself mentally correcting something, pause and ask whether it truly matters or whether you are channeling anxiety into control',
+      'Schedule regular time for unstructured pleasure and play with no productive purpose, training yourself to tolerate the discomfort of doing something "just because" it feels good',
+      'When you feel the urge to correct someone, try asking a genuine question about their perspective instead\u2014you may discover that there are valid approaches you had not considered',
+      'Develop a daily practice of acknowledging what is already good and working in your life, your relationships, and your work before identifying what needs improvement',
+      'Allow yourself to feel and express anger directly rather than converting it to resentment\u2014saying "I am frustrated" in the moment is far healthier than a week of silent disapproval'
+    ],
+    levels: {
+      1: 'Level 1 (Liberation): Become extraordinarily wise, humane, and discerning. They embody the ideal of reason and morality without rigidity, accepting life as it is while still working for positive change.',
+      2: 'Level 2 (Psychological Capacity): Conscientious, with a strong sense of right and wrong. They feel a personal obligation to improve things and hold themselves to high ethical standards with grace.',
+      3: 'Level 3 (Social Value): Principled, fair, and objective. They become excellent teachers and moral exemplars who inspire others through their integrity and consistent follow-through.',
+      4: 'Level 4 (Imbalance): Begin to feel a strong obligation to fix everything. They become more rigid in their views and start to fear making mistakes, leading to increased self-monitoring.',
+      5: 'Level 5 (Interpersonal Control): Become orderly, methodical, and controlling. They impose their standards on others through criticism and correction, convinced they know the right way.',
+      6: 'Level 6 (Overcompensation): Highly critical, judgmental, and perfectionistic. They become preachy, scolding, and abrasive, pointing out everyone else\'s faults while denying their own.',
+      7: 'Level 7 (Violation): Become inflexible, dogmatic, and self-righteous. They see themselves as the sole arbiters of truth and morality, becoming obsessively fixated on others\' perceived wrongdoing.',
+      8: 'Level 8 (Delusion and Compulsion): Develop obsessive thinking and compulsive behaviors. They become hypocritical, condemning in others what they secretly do themselves, all while rationalizing their own contradictions.',
+      9: 'Level 9 (Pathological Destructiveness): Become punitive and cruel, convinced that their harsh actions are morally justified. They may engage in acts of condemnation or retribution while believing they serve a righteous cause.'
+    }
+  },
+  2: {
+    name: 'The Helper',
+    color: '#f06292',
+    triad: 'feeling',
+    subtitle: 'The Caring, Interpersonal Type',
+    basicFear: 'Of being unwanted, unworthy of being loved',
+    basicDesire: 'To feel loved and appreciated',
+    keyMotivations: 'Want to be loved, to express their feelings for others, to be needed and appreciated, to get others to respond to them, to vindicate their claims about themselves.',
+    desc: 'Twos are empathetic, sincere, and warm-hearted. They are friendly, generous, and self-sacrificing, but can also be sentimental, flattering, and people-pleasing.',
+    longDesc: 'Twos are generous, demonstrative, people-pleasing, and possessive. They genuinely care about others and derive their sense of self-worth from being helpful, loving, and indispensable to the people in their lives. At their best, Twos are truly altruistic, unselfish, and unconditionally loving\u2014they give without strings attached and help others flourish. However, at average and unhealthy levels, their giving becomes strategic, even manipulative, as they seek to create obligation and dependency. Twos repress their own needs while focusing intensely on the needs of others, creating a hidden reservoir of unacknowledged wants that eventually overflow into demands, entitlement, and resentment. The core issue for Twos is learning that they are lovable for who they are, not for what they do for others.',
+    strengths: [
+      'Deeply empathetic and attuned to the emotional states and needs of others, often sensing what someone needs before they ask',
+      'Generous with their time, energy, and resources, creating a warm and supportive environment wherever they go',
+      'Excellent at building and maintaining relationships, remembering personal details and making people feel valued and seen',
+      'Adaptable and interpersonally skilled, able to adjust their approach to connect with a wide range of personality types',
+      'Encouraging and affirming, with a natural ability to bring out the best in others and help them believe in themselves'
+    ],
+    challenges: [
+      'Difficulty acknowledging and expressing their own needs, leading to chronic self-neglect and eventual burnout or resentment',
+      'Tendency to become possessive and controlling in relationships, using their helpfulness to create dependency and obligation',
+      'Flattering and people-pleasing behavior that can feel inauthentic or manipulative, especially when the Two has an ulterior motive',
+      'Repressing negative emotions like anger and frustration until they erupt in dramatic, seemingly disproportionate outbursts',
+      'Defining their identity entirely through relationships, leading to a fragile sense of self that collapses when they feel unappreciated'
+    ],
+    leadership: 'Twos lead through personal connection and emotional intelligence. They build loyal teams by genuinely caring about each person\'s well-being and creating a sense of family in the workplace. Their warmth and attentiveness inspire deep loyalty and trust. However, they must guard against playing favorites, avoiding difficult conversations to preserve harmony, and becoming resentful when their efforts go unrecognized. The best Two leaders learn to set boundaries, delegate without strings attached, and model self-care as a legitimate priority rather than a selfish indulgence.',
+    growth: 4,
+    stress: 8,
+    wings: [1, 3],
+    wingDescriptions: {
+      1: 'The Two with a One wing (2w1) is sometimes called "The Servant." This subtype combines the Two\'s desire to help with the One\'s sense of moral purpose, producing someone who is driven to serve causes and people they believe are worthy. They tend to be more serious, principled, and self-critical than the 2w3, with higher standards for how help should be given. They may be drawn to teaching, social work, healthcare, or ministry. The One wing adds conscience and structure to the Two\'s warmth, but it can also make them more judgmental about who "deserves" help and more rigid about how relationships should function.',
+      3: 'The Two with a Three wing (2w3) is sometimes called "The Host/Hostess." This subtype combines the Two\'s interpersonal warmth with the Three\'s charm and ambition, creating someone who is socially polished, charismatic, and highly attuned to image. They are often the social center of their group, skilled at bringing people together and making everyone feel special. They tend to be more outgoing, competitive, and image-conscious than the 2w1. The Three wing adds drive and presentation skills, but it can also amplify the Two\'s tendency toward superficiality and make their helping more performative\u2014focused on being seen as generous rather than on the actual needs of others.'
+    },
+    growthDesc: 'In growth, Twos move toward the healthy qualities of Type Four. They develop self-awareness, emotional depth, and a genuine relationship with their own inner life. Instead of constantly focusing on others\' needs, they learn to honor their own feelings, creativity, and unique identity. They become more authentic in their self-expression, more willing to sit with painful emotions rather than rushing to fix them through helping, and more capable of genuine intimacy because they bring their whole self to relationships rather than just the parts that please others.',
+    stressDesc: 'Under stress, Twos take on the unhealthy qualities of Type Eight. Their suppressed anger and unacknowledged needs finally erupt in aggressive, domineering behavior. They become confrontational, demanding, and controlling\u2014insisting that others acknowledge everything they have done and feeling entitled to return on their investment of care. They may become physically intimidating, verbally harsh, and shockingly blunt in ways that seem completely out of character. The underlying message is: "After everything I have done for you, you owe me," revealing the hidden transactional nature of their giving.',
+    securityDesc: 'When Twos feel safe and comfortable, they can move to the average qualities of Type Four. Rather than accessing Four\'s healthy emotional depth, they may become moody, self-absorbed, and dramatically focused on their own emotional pain. They might suddenly withdraw from their usual helping role and become sulky, envious, or fixated on how their needs are not being met. This can be confusing for people who are used to the Two\'s selfless warmth\u2014suddenly the Two is demanding attention, expressing dissatisfaction, and comparing their situation unfavorably to others. It is as though all the repressed self-focus comes flooding out without the self-awareness that genuine growth would provide.',
+    passion: 'Pride',
+    passionDesc: 'The passion of the Two is pride\u2014not the obvious, boastful kind, but a subtler form that manifests as an inflated sense of their own indispensability and a denial of their own neediness. Twos take pride in being the one who gives, the one who knows what everyone needs, the one who holds relationships together. This pride prevents them from acknowledging their own vulnerability and dependency because to admit they have needs would undermine their identity as the selfless helper. The paradox is that Twos are among the neediest types precisely because they deny their neediness\u2014their unacknowledged needs leak out as demands, manipulation, and the expectation that others should intuitively reciprocate their care.',
+    hiddenSide: 'Beneath the warm, giving exterior, Twos harbor a fierce need for control and a deep well of anger at the unfairness of always being the one who gives. Many Twos secretly keep a running ledger of what they have done for others and feel intense resentment when the balance is not reciprocated. The hidden truth of the Two is that their compulsive helping is not purely altruistic\u2014it is a sophisticated strategy for earning love and avoiding the terrifying possibility that they are not inherently lovable. Their greatest fear is not that others will stop needing them, but that without their role as helper, they have no identity at all.',
+    relationshipIssues: [
+      'Giving with hidden strings attached, then becoming hurt and resentful when their partner does not reciprocate in the specific way they expected but never communicated',
+      'Losing themselves in their partner\'s life\u2014adopting their interests, befriending their friends, and neglecting their own identity\u2014then blaming the partner for the loss of self',
+      'Difficulty accepting help or gifts from their partner because it threatens their identity as the giver, creating an imbalanced dynamic that frustrates both parties',
+      'Using emotional manipulation\u2014guilt trips, martyrdom, or withholding affection\u2014to get their needs met indirectly rather than asking directly for what they want',
+      'Becoming possessive and jealous when their partner forms close connections with others, feeling threatened that they will be replaced as the primary source of support'
+    ],
+    growthRecs: [
+      'Practice identifying and expressing your own needs directly rather than hinting at them or expecting others to intuit them\u2014start small with low-stakes requests and build from there',
+      'Develop a relationship with solitude and self-care that is not about recharging to help others more effectively, but about valuing your own well-being as an end in itself',
+      'Before offering help, pause and ask yourself honestly: "Am I doing this because they truly need it, or because I need to be needed?" Let the answer guide your action',
+      'Allow others to give to you without immediately reciprocating\u2014sit with the discomfort of receiving and notice the stories your mind tells about what it means to be on the receiving end',
+      'Cultivate interests, hobbies, and parts of your identity that are entirely your own\u2014things that have nothing to do with your relationships or your role as a helper'
+    ],
+    levels: {
+      1: 'Level 1 (Liberation): Become deeply unselfish, humble, and altruistic. They give unconditionally without any need for recognition, embodying genuine love that nurtures others\' independence rather than creating dependency.',
+      2: 'Level 2 (Psychological Capacity): Empathetic and compassionate, with a sincere desire to help others grow. They are emotionally generous and attuned, offering support that is truly responsive to others\' needs.',
+      3: 'Level 3 (Social Value): Caring, warm, and encouraging. They become excellent friends, partners, and mentors who help others believe in themselves and provide practical support with grace.',
+      4: 'Level 4 (Imbalance): Begin to want others to need them. They become more people-pleasing and start keeping track of what they give, expecting appreciation and reciprocity in return.',
+      5: 'Level 5 (Interpersonal Control): Become intrusive and overly intimate, inserting themselves into others\' lives uninvited. They hover, smother, and begin to create obligation through unsolicited favors.',
+      6: 'Level 6 (Overcompensation): Self-important and presumptuous, they feel entitled to get what they want from others. They become manipulative, using flattery, guilt, and emotional coercion to maintain their position.',
+      7: 'Level 7 (Violation): Become self-deceiving about their own motives and manipulative in their interactions. They rationalize their controlling behavior as love while becoming increasingly possessive and domineering.',
+      8: 'Level 8 (Delusion and Compulsion): Coercive and dominating, they feel entitled to extract what they need from others by any means. They become obsessed with controlling those closest to them while denying any selfish motivation.',
+      9: 'Level 9 (Pathological Destructiveness): Can become physically and emotionally destructive. Their repressed needs explode outward in psychosomatic illness, stalking behavior, or acts of retribution against those they feel have betrayed their love.'
+    }
+  },
+  3: {
+    name: 'The Achiever',
+    color: '#ffd54f',
+    triad: 'feeling',
+    subtitle: 'The Success-Oriented, Pragmatic Type',
+    basicFear: 'Of being worthless or without inherent value',
+    basicDesire: 'To feel valuable and worthwhile',
+    keyMotivations: 'Want to be affirmed, to distinguish themselves from others, to have attention, to be admired, and to impress others.',
+    desc: 'Threes are self-assured, attractive, and charming. Ambitious, competent, and energetic, they can also be status-conscious and highly driven for advancement.',
+    longDesc: 'Threes are adaptable, excelling, driven, and image-conscious. They are the primary type in the Feeling triad, yet ironically they are often the most out of touch with their feelings because they learn early to set aside their emotions in favor of achievement and performance. At their best, Threes are authentic, self-accepting, and genuinely admirable role models who inspire others through their excellence. However, at average and unhealthy levels, they become chameleons who shape-shift to match whatever image will win approval in their current context. Their core wound is the belief that they are only as valuable as their last accomplishment, driving a relentless pursuit of success that can leave them hollow and disconnected from who they truly are beneath the polished exterior.',
+    strengths: [
+      'Highly driven and goal-oriented, with an exceptional ability to set objectives and achieve them efficiently',
+      'Adaptable and socially intelligent, able to read a room and adjust their presentation to connect with diverse audiences',
+      'Energetic and optimistic, bringing enthusiasm and momentum to teams and projects that motivates others to perform',
+      'Practical and results-focused, cutting through complexity to identify the most efficient path to success',
+      'Excellent at self-presentation and communication, able to articulate vision and inspire confidence in others'
+    ],
+    challenges: [
+      'Confusing their image with their identity, losing touch with who they actually are beneath the roles they perform',
+      'Workaholism and inability to slow down, driven by the fear that their value depends entirely on constant productivity and achievement',
+      'Cutting corners ethically or relationally in pursuit of success, rationalizing that the ends justify the means',
+      'Difficulty with vulnerability and emotional intimacy because showing weakness feels like it would destroy their carefully crafted image',
+      'Comparing themselves to others and measuring their worth through external metrics\u2014titles, income, recognition\u2014rather than intrinsic qualities'
+    ],
+    leadership: 'Threes are natural leaders who excel at setting vision, driving results, and motivating teams toward ambitious goals. They create high-performance cultures and lead by example through their tireless work ethic and competence. However, they must guard against prioritizing appearances over substance, taking credit for team efforts, and creating environments where only winners are valued. The best Three leaders learn to model vulnerability, celebrate process alongside outcomes, and create space for team members to fail and learn without fear of losing status.',
+    growth: 6,
+    stress: 9,
+    wings: [2, 4],
+    wingDescriptions: {
+      2: 'The Three with a Two wing (3w2) is sometimes called "The Charmer." This subtype combines the Three\'s drive for success with the Two\'s interpersonal warmth, creating someone who achieves largely through personal relationships and charisma. They are often the most socially adept of all the types\u2014charming, generous, and genuinely interested in helping others succeed alongside them. They tend to be more extroverted, friendly, and emotionally expressive than the 3w4. The Two wing adds genuine warmth and relational skill, but it can also amplify the Three\'s tendency toward people-pleasing and make their achievements more focused on being admired personally rather than on the quality of the work itself.',
+      4: 'The Three with a Four wing (3w4) is sometimes called "The Professional." This subtype combines the Three\'s achievement drive with the Four\'s emotional depth and desire for authenticity, creating someone who pursues excellence in more creative, individualistic, or artistic domains. They tend to be more introspective, serious, and emotionally complex than the 3w2, with a stronger connection to their inner world. The Four wing adds depth, creativity, and a longing for genuine self-expression, but it can also create an inner tension between the Three\'s desire to conform to successful images and the Four\'s desire to be uniquely authentic, producing mood swings and identity confusion.'
+    },
+    growthDesc: 'In growth, Threes move toward the healthy qualities of Type Six. They develop loyalty, commitment to others, and the courage to be genuinely vulnerable. Instead of constantly performing and seeking admiration, they learn to value cooperation, trust, and authentic connection. They become more team-oriented, more willing to ask for help, and more invested in the success of others rather than just their own advancement. They discover that real security comes not from achievement and image but from the steadfast relationships and communities they build through honesty and mutual support.',
+    stressDesc: 'Under stress, Threes take on the unhealthy qualities of Type Nine. They become disengaged, apathetic, and surprisingly passive\u2014a stark contrast to their usual driven energy. They may numb out with television, food, or mindless activities, losing their characteristic motivation and becoming listless and depressed. The go-getter who once worked eighty-hour weeks suddenly cannot get off the couch. This happens because the Three\'s usual coping mechanism\u2014achieving their way out of problems\u2014has failed, and without it, they have no other strategy. They check out rather than face the pain of perceived failure.',
+    securityDesc: 'When Threes feel safe and comfortable, they can move to the average qualities of Type Six. Rather than accessing Six\'s healthy loyalty and courage, they may become anxious, indecisive, and surprisingly dependent on others\' opinions. They might second-guess decisions they would normally make with confidence, seek excessive reassurance, and become preoccupied with worst-case scenarios. This can manifest as suspicion about colleagues\' motives or anxiety about their position and security. It is as though the armor of confidence drops away, revealing the insecurity that was always underneath, but without the healthy self-awareness needed to work through it constructively.',
+    passion: 'Deceit (Vanity)',
+    passionDesc: 'The passion of the Three is deceit, sometimes called vanity\u2014not necessarily lying to others, but a fundamental self-deception in which the Three loses the boundary between their authentic self and the image they project. Threes become so identified with their successful persona that they genuinely cannot distinguish between what they truly feel and what they believe they should feel to maintain their image. This self-deception extends outward as they present a polished version of reality to others, omitting failures, exaggerating accomplishments, and shape-shifting to match the expectations of their audience. The deepest deceit is that Threes convince themselves they are their image\u2014that the mask is the face.',
+    hiddenSide: 'Beneath the confident, accomplished exterior, Threes often feel profoundly empty and terrified that if people saw the "real" them\u2014without the achievements, the titles, and the polished presentation\u2014there would be nothing there worth loving. Many Threes have a secret fear that they are fundamentally fraudulent, that their success is built on performance rather than substance. The hidden truth of the Three is that their relentless drive is not fueled by genuine ambition but by a desperate flight from worthlessness. In quiet, unguarded moments, they may feel a devastating hollowness and wonder if they have ever done anything that was truly their own choice rather than a calculated move to win approval.',
+    relationshipIssues: [
+      'Prioritizing work and external achievements over the relationship, leaving their partner feeling like a supporting character in the Three\'s success story rather than an equal partner',
+      'Difficulty being emotionally present and vulnerable, deflecting intimate conversations with humor, problem-solving, or topic changes because feelings feel unproductive',
+      'Projecting a polished image even within the relationship, making their partner feel like they never truly know the real person behind the accomplishments',
+      'Becoming competitive with their partner rather than collaborative, measuring the relationship\'s worth by how it appears to outsiders rather than how it actually feels',
+      'Shutting down or withdrawing when they feel they have failed in the relationship, because their self-worth cannot tolerate the perception of being a bad partner'
+    ],
+    growthRecs: [
+      'Practice spending time alone without any agenda, goal, or productive outcome\u2014sit with the discomfort of being rather than doing and notice what feelings arise in the stillness',
+      'Tell someone you trust about a failure, a fear, or a struggle without spinning it into a growth narrative or a lesson learned\u2014let the vulnerability stand on its own',
+      'Before starting a new project or pursuing a new goal, pause and ask yourself: "Is this what I truly want, or is this what I think will make me look successful?"',
+      'Develop a practice of checking in with your emotions multiple times per day\u2014literally stopping to name what you are feeling\u2014since your habit is to override feelings with action',
+      'Invest deeply in one or two relationships where you commit to showing up without your professional persona, letting the other person see your doubts, fears, and ordinary humanness'
+    ],
+    levels: {
+      1: 'Level 1 (Liberation): Become self-accepting, inner-directed, and authentic. They are genuine role models who inspire others not through image but through the depth of their character and the sincerity of their accomplishments.',
+      2: 'Level 2 (Psychological Capacity): Self-assured and energetic, with a genuine belief in their own value. They set meaningful goals and pursue them with a healthy balance of ambition and self-awareness.',
+      3: 'Level 3 (Social Value): Admirable, accomplished, and effective. They become outstanding professionals and communicators who motivate others through genuine competence and a can-do attitude.',
+      4: 'Level 4 (Imbalance): Begin to focus on their image and how they are perceived. They become more competitive, comparing themselves to others and adjusting their presentation to win approval.',
+      5: 'Level 5 (Interpersonal Control): Image-conscious and calculating, they begin crafting a persona designed to impress. They become workaholic and efficiency-obsessed, cutting emotional corners to stay productive.',
+      6: 'Level 6 (Overcompensation): Self-promoting, grandiose, and deceptive. They exaggerate accomplishments, name-drop, and present a false image of success while becoming increasingly disconnected from reality.',
+      7: 'Level 7 (Violation): Exploitative and opportunistic, they are willing to do whatever it takes to maintain the illusion of success. They become jealous of others and sabotage competitors while maintaining a veneer of friendliness.',
+      8: 'Level 8 (Delusion and Compulsion): Duplicitous and devious, they betray others without remorse to protect their image. They become pathological in their deception, constructing elaborate false narratives about their life and achievements.',
+      9: 'Level 9 (Pathological Destructiveness): Vindictive and psychopathic, they may attempt to destroy anyone who threatens to expose the gap between their image and reality. Complete emotional breakdown is possible when the facade finally collapses.'
+    }
+  },
+  4: {
+    name: 'The Individualist',
+    color: '#9575cd',
+    triad: 'feeling',
+    subtitle: 'The Sensitive, Withdrawn Type',
+    basicFear: 'That they have no identity or personal significance',
+    basicDesire: 'To find themselves and their significance, to create an identity',
+    keyMotivations: 'Want to express themselves and their individuality, to create and surround themselves with beauty, to maintain certain moods and feelings, to withdraw to protect their self-image, to take care of emotional needs before attending to anything else.',
+    desc: 'Fours are self-aware, sensitive, and reserved. They are emotionally honest, creative, and personal, but can also be moody and self-conscious.',
+    longDesc: 'Fours are expressive, dramatic, self-absorbed, and temperamental. They feel that something essential is missing from their core self\u2014something that other people seem to have naturally\u2014and this sense of deficiency drives both their creativity and their suffering. At their best, Fours are profoundly creative, emotionally honest, and capable of transforming suffering into beauty and meaning. They give the world some of its greatest art, music, and literature. However, at average and unhealthy levels, they become trapped in a cycle of longing and melancholy, romanticizing their pain and withdrawing into fantasy rather than engaging with life as it actually is. Fours maintain their identity through their emotional intensity\u2014they would rather feel deeply unhappy than feel nothing at all, because their feelings are the proof that they are special and real.',
+    strengths: [
+      'Exceptionally creative and emotionally expressive, able to transform personal experience into art, beauty, and meaning that resonates deeply with others',
+      'Emotionally honest and authentic, willing to explore the full spectrum of human feeling including grief, longing, and despair that most people avoid',
+      'Highly intuitive and empathetic, particularly attuned to the suffering and unspoken emotional truths of others',
+      'Deeply committed to individuality and self-expression, refusing to settle for a cookie-cutter life even when conformity would be easier',
+      'Able to find beauty, depth, and significance in experiences and situations that others overlook or dismiss as ordinary'
+    ],
+    challenges: [
+      'Chronic feelings of envy and deficiency\u2014the sense that others have something essential that they lack, leading to painful comparison and self-doubt',
+      'Romanticizing suffering and melancholy, using emotional pain as a source of identity rather than something to work through and move beyond',
+      'Withdrawing from life and relationships during emotional storms, pushing away the very people and experiences that could help them heal',
+      'Self-absorption that makes it difficult to see beyond their own emotional landscape, causing them to be unreliable and inconsiderate when consumed by their inner world',
+      'Rejecting the ordinary and everyday as beneath them, creating a pattern of dissatisfaction where nothing real can ever match the idealized vision in their imagination'
+    ],
+    leadership: 'Fours lead through vision, authenticity, and emotional depth. They create cultures that value creativity, individual expression, and meaningful work. Their sensitivity to beauty and meaning can produce organizations with strong aesthetic identities and deeply committed employees who feel seen and valued. However, they must guard against moodiness, favoritism toward "special" individuals, and a tendency to make decisions based on emotional states rather than strategic considerations. The best Four leaders learn to channel their emotional depth into empathetic leadership while maintaining the consistency and reliability that teams need.',
+    growth: 1,
+    stress: 2,
+    wings: [3, 5],
+    wingDescriptions: {
+      3: 'The Four with a Three wing (4w3) is sometimes called "The Aristocrat." This subtype combines the Four\'s emotional depth with the Three\'s drive for achievement and image-consciousness, creating someone who channels their individuality into visible accomplishments and public expression. They tend to be more extroverted, ambitious, and competitive than the 4w5, with a stronger need for external validation. They are often drawn to performance, fashion, design, and other fields where they can express their unique vision while also gaining recognition. The Three wing adds energy, social skill, and drive, but it can also amplify the Four\'s vanity and create a painful tension between authenticity and the desire for approval.',
+      5: 'The Four with a Five wing (4w5) is sometimes called "The Bohemian." This subtype combines the Four\'s emotional depth with the Five\'s intellectual intensity and withdrawal, creating someone who is deeply introspective, iconoclastic, and often brilliantly original. They tend to be more introverted, cerebral, and reclusive than the 4w3, with rich inner worlds that may never be fully shared with others. They are drawn to philosophy, avant-garde art, and unconventional lifestyles. The Five wing adds intellectual rigor and independence, but it can also intensify the Four\'s tendency toward isolation, making them more eccentric, nihilistic, and detached from practical reality.'
+    },
+    growthDesc: 'In growth, Fours move toward the healthy qualities of Type One. They develop discipline, objectivity, and the ability to channel their emotional energy into principled, constructive action. Instead of being swept away by their moods, they learn to use structure and routine as a container for their creativity. They become more grounded, more productive, and more able to engage with the practical demands of life without feeling that doing so compromises their authenticity. Their art and self-expression gain power from this discipline, moving beyond raw feeling into crafted, impactful work.',
+    stressDesc: 'Under stress, Fours take on the unhealthy qualities of Type Two. They become clingy, desperate for connection, and willing to abandon their individuality to win the love and approval of others. They may become overly accommodating, flattering, and people-pleasing\u2014sacrificing the very authenticity that defines them in a frantic attempt to avoid abandonment. They intrude on others\' boundaries, become possessive, and adopt a martyred stance, insisting that they have given everything while receiving nothing in return. The proud independence of the Four collapses into desperate dependency.',
+    securityDesc: 'When Fours feel safe and comfortable, they can move to the average qualities of Type One. Rather than accessing One\'s healthy discipline and purpose, they may become rigid, critical, and judgmental\u2014particularly toward the people closest to them. They might fixate on what is wrong with their environment, their relationships, or their creative work, becoming perfectionistic and controlling in ways that are out of character. This can manifest as nagging, nitpicking, and a sudden insistence on rules and order that surprises those accustomed to the Four\'s usual bohemian flexibility. It is as though the emotional chaos they normally tolerate suddenly feels unbearable, and they try to impose external order to compensate.',
+    passion: 'Envy',
+    passionDesc: 'The passion of the Four is envy\u2014a chronic, pervasive sense that others possess something essential that the Four lacks. This is not simply wanting what someone else has; it is a deep existential feeling that other people were given a fundamental wholeness or ease of being that was somehow withheld from the Four. Envy colors every perception: the Four sees others as effortlessly happy, naturally confident, or simply "normal" in ways they can never be. This envy drives the Four\'s simultaneous longing for connection and contemptuous rejection of the ordinary, as they oscillate between wanting to belong and insisting that they are too special and deep for the shallow world of normal people.',
+    hiddenSide: 'Beneath the dramatic, emotionally intense exterior, Fours often harbor a deep envy of ordinary happiness\u2014of people who can enjoy a sunny day, a stable relationship, or a regular job without the crushing weight of existential significance. Many Fours secretly wish they could just be "normal" and stop feeling everything so intensely. The hidden truth of the Four is that their attachment to their identity as someone who suffers beautifully is itself a defense against the terrifying possibility that they are, in fact, ordinary\u2014and that ordinariness is not the catastrophe they imagine. Their dramatic self-image protects them from the grief of accepting that they are fundamentally no different from anyone else.',
+    relationshipIssues: [
+      'Idealizing new relationships and then becoming disillusioned when the real person inevitably falls short of the fantasy, creating a push-pull dynamic of intense attraction and disappointed withdrawal',
+      'Using emotional intensity and dramatic conflict as a way to feel alive in the relationship, unconsciously creating crises to avoid the "boredom" of stable, everyday love',
+      'Comparing their relationship unfavorably to an idealized vision of what love should feel like, always sensing that something is missing even when things are objectively good',
+      'Withdrawing emotionally and becoming unavailable when they feel misunderstood, expecting their partner to pursue them rather than communicating their needs directly',
+      'Becoming envious of their partner\'s happiness, friendships, or ease with life, and expressing this as criticism, moodiness, or passive-aggressive withdrawal'
+    ],
+    growthRecs: [
+      'Develop a daily creative or physical practice with a consistent routine\u2014show up whether you feel inspired or not, and discover that discipline actually deepens rather than kills your creativity',
+      'When you catch yourself comparing your inner experience to someone else\'s outer appearance, remind yourself that you are comparing your blooper reel to their highlight reel\u2014everyone struggles beneath the surface',
+      'Practice gratitude for what is present in your life rather than focusing on what is absent\u2014this is not about forced positivity but about training your attention to include the full picture',
+      'When a strong mood arises, feel it fully for a set period of time and then take one concrete action in the external world\u2014call a friend, take a walk, complete a task\u2014to break the cycle of emotional rumination',
+      'Challenge the belief that ordinary experiences are beneath you by engaging fully with everyday life\u2014cooking a meal, cleaning your space, having a simple conversation\u2014and noticing the quiet beauty in the mundane'
+    ],
+    levels: {
+      1: 'Level 1 (Liberation): Profoundly creative, expressing the universal in the deeply personal. They transform suffering into art and meaning, inspiring others through their emotional courage and radical self-honesty.',
+      2: 'Level 2 (Psychological Capacity): Self-aware, introspective, and emotionally honest. They have a rich inner life and are able to hold complexity, ambiguity, and paradox with grace and creativity.',
+      3: 'Level 3 (Social Value): Inspired and highly creative, they produce original, personally revealing work. They are sensitive, emotionally strong, and able to connect with others through their vulnerability and authenticity.',
+      4: 'Level 4 (Imbalance): Begin to romanticize their emotional life and protect their self-image through withdrawal. They become more self-conscious, holding others at arm\'s length while longing for deeper connection.',
+      5: 'Level 5 (Interpersonal Control): Self-absorbed, moody, and hypersensitive. They become temperamental and dramatic, living in their imagination and fantasy life rather than engaging with the world as it is.',
+      6: 'Level 6 (Overcompensation): Decadent, self-indulgent, and emotionally volatile. They become impractical dreamers, angry at reality for not matching their fantasies, and contemptuous of anyone who seems happy or well-adjusted.',
+      7: 'Level 7 (Violation): Self-inhibiting, depressed, and ashamed. They become paralyzed by self-doubt and self-hatred, unable to function but also unable to ask for help because they feel too defective to deserve it.',
+      8: 'Level 8 (Delusion and Compulsion): Tormented by self-contempt and hopelessness. They become emotionally blocked, unable to connect with others, and may engage in self-destructive behavior as an expression of their inner despair.',
+      9: 'Level 9 (Pathological Destructiveness): Despairing and suicidal, they may destroy themselves or their lives in a final dramatic gesture. All hope is gone, and they feel completely alienated from the world and from any possibility of love or connection.'
+    }
+  },
+  5: {
+    name: 'The Investigator',
+    color: '#4db6ac',
+    triad: 'thinking',
+    subtitle: 'The Intense, Cerebral Type',
+    basicFear: 'Being useless, helpless, or incapable',
+    basicDesire: 'To be capable and competent',
+    keyMotivations: 'Want to possess knowledge, to understand the environment, to have everything figured out as a way of defending the self from threats from the environment.',
+    desc: 'Fives are alert, insightful, and curious. They are able to concentrate and focus on developing complex ideas and skills. Independent, innovative, and inventive, they can also become preoccupied with their thoughts and imaginary constructs.',
+    longDesc: 'Fives are perceptive, innovative, secretive, and isolated. They are the most cerebral of the Enneagram types, driven by a deep need to understand how the world works before they feel safe enough to participate in it. At their best, Fives are visionary pioneers who make groundbreaking discoveries and see reality with extraordinary clarity and depth. They are the type most likely to produce genuinely original ideas that change the world. However, at average and unhealthy levels, they retreat into their minds, substituting intellectual understanding for direct experience and hoarding their time, energy, and resources out of a deep fear of depletion. The core issue for Fives is the belief that they do not have enough inner resources to engage with the world, leading them to minimize their needs and withdraw from life to conserve what little they feel they have.',
+    strengths: [
+      'Exceptionally perceptive and analytically brilliant, able to see patterns, connections, and implications that others miss entirely',
+      'Independent and self-sufficient, able to work alone for extended periods with deep concentration and focus',
+      'Objective and clear-headed in crisis situations, bringing calm rationality when everyone else is panicking',
+      'Deeply curious and committed to understanding, willing to spend years mastering complex subjects that others find impenetrable',
+      'Innovative and original thinkers who approach problems from unconventional angles and generate breakthrough insights'
+    ],
+    challenges: [
+      'Withdrawing from life and relationships into the safety of the mind, substituting thinking about experience for actually having it',
+      'Hoarding time, energy, and resources out of a fear of depletion, becoming miserly and withholding with the people who need them most',
+      'Difficulty with emotions\u2014both their own and others\'\u2014leading them to intellectualize feelings rather than experiencing and expressing them',
+      'Social awkwardness and interpersonal detachment that can make them seem cold, arrogant, or dismissive even when they genuinely care',
+      'Analysis paralysis and the belief that they need to know more before they can act, using research and preparation as a way to avoid the risks of real engagement'
+    ],
+    leadership: 'Fives lead through expertise, vision, and strategic thinking. They excel at seeing the big picture, identifying emerging trends, and developing innovative solutions to complex problems. Their calm objectivity can be invaluable during crises. However, they must guard against becoming too detached from their team, hoarding information, and failing to communicate their vision in ways that inspire and motivate others. The best Five leaders learn to share their knowledge generously, develop emotional intelligence alongside their intellectual gifts, and step out from behind their desks to engage personally with the people they lead.',
+    growth: 8,
+    stress: 7,
+    wings: [4, 6],
+    wingDescriptions: {
+      4: 'The Five with a Four wing (5w4) is sometimes called "The Iconoclast." This subtype combines the Five\'s intellectual intensity with the Four\'s emotional depth and desire for uniqueness, creating someone who is deeply original, highly creative, and often brilliantly unconventional. They tend to be more introspective, artistic, and emotionally aware than the 5w6, drawn to subjects that are strange, dark, or taboo. They are often found among visionary artists, composers, filmmakers, and writers. The Four wing adds emotional sensitivity and creative vision, but it can also intensify the Five\'s tendency toward isolation and make them more prone to melancholy, eccentricity, and a brooding nihilism.',
+      6: 'The Five with a Six wing (5w6) is sometimes called "The Problem Solver." This subtype combines the Five\'s analytical mind with the Six\'s loyalty, practicality, and orientation toward systems and structures. They tend to be more grounded, sociable, and team-oriented than the 5w4, with a greater interest in applying their knowledge to real-world problems. They are often drawn to science, engineering, technology, and organizational analysis. The Six wing adds cooperativeness and a desire for security that can motivate the Five to engage more with the world, but it can also amplify anxiety, suspicion, and a tendency toward worst-case thinking.'
+    },
+    growthDesc: 'In growth, Fives move toward the healthy qualities of Type Eight. They develop confidence, assertiveness, and the willingness to act decisively in the world. Instead of retreating into observation and analysis, they learn to trust their instincts, engage physically with life, and use their knowledge as a foundation for powerful action rather than an end in itself. They become more embodied, more present, and more willing to take up space\u2014leading, building, and making their mark on the world rather than merely understanding it from a safe distance.',
+    stressDesc: 'Under stress, Fives take on the unhealthy qualities of Type Seven. They become scattered, hyperactive, and impulsive\u2014frantically seeking stimulation and distraction rather than maintaining their usual focused depth. They may leap from topic to topic, take on too many projects, or indulge in excessive consumption of information, food, or entertainment. Their usual mental clarity dissolves into anxiety-driven restlessness as they try to outrun the feelings of emptiness and overwhelm by filling themselves with more and more input. The depth gives way to breadth, and the discipline gives way to chaos.',
+    securityDesc: 'When Fives feel safe and comfortable, they can move to the average qualities of Type Eight. Rather than accessing Eight\'s healthy assertiveness and leadership, they may become controlling, territorial, and surprisingly aggressive in their interpersonal style. They might dominate conversations, become dismissive of others\' ideas, and assert their authority in blunt, intimidating ways that are out of character. This can manifest as intellectual bullying, condescension, or an insistence on being right that goes beyond their usual quiet confidence. It is as though the normally restrained Five suddenly feels permission to express the aggression and dominance they usually suppress, but without the emotional intelligence to do so constructively.',
+    passion: 'Avarice',
+    passionDesc: 'The passion of the Five is avarice\u2014a deep, pervasive fear of scarcity that extends beyond material possessions to encompass time, energy, knowledge, and emotional resources. Fives feel that they have a limited supply of inner resources and that the world is constantly making demands that will deplete them, so they minimize their needs, hoard what they have, and withdraw from situations that feel draining. This avarice is not about greed for more but about the desperate conservation of what little they believe they possess. It manifests as emotional stinginess, social withdrawal, and the creation of elaborate boundaries and compartments to protect their inner world from intrusion.',
+    hiddenSide: 'Beneath the detached, cerebral exterior, Fives often experience intense emotions that they neither understand nor know how to express. Many Fives have a hidden longing for deep emotional connection and belonging that they dare not act on because the vulnerability required feels too dangerous. The hidden truth of the Five is that their withdrawal into the mind is not a preference but a defense\u2014they retreat into thinking because the world of feelings and relationships feels overwhelmingly chaotic and depleting. Their intellectual confidence masks a deep insecurity about their capacity to handle the demands of embodied, emotionally engaged life. In their most private moments, many Fives feel profoundly lonely and wonder if their detachment has cost them the very life they were trying to protect.',
+    relationshipIssues: [
+      'Withdrawing into private space and intellectual pursuits when their partner wants emotional connection, creating a pursuit-withdrawal dynamic that escalates over time',
+      'Difficulty sharing their inner world, feelings, and daily experiences, making their partner feel shut out of their life even when living under the same roof',
+      'Becoming overwhelmed by emotional demands and responding with coldness, detachment, or irritability rather than communicating their need for space in a way that does not feel like rejection',
+      'Compartmentalizing their relationship into a separate box from the rest of their life, keeping their partner at arm\'s length from friends, work, and personal interests',
+      'Substituting intellectual analysis for emotional engagement\u2014discussing the relationship in abstract terms rather than being present with the actual feelings between them'
+    ],
+    growthRecs: [
+      'Practice engaging with the world through your body rather than just your mind\u2014physical exercise, cooking, gardening, or any activity that grounds you in sensory experience and gets you out of your head',
+      'Share something you know with someone who would benefit from it before you feel completely ready\u2014generosity with your knowledge and time is the antidote to avarice',
+      'When you notice the impulse to withdraw, experiment with staying engaged for just a few minutes longer than feels comfortable, gradually expanding your capacity for connection',
+      'Develop the habit of naming your emotions in real time rather than analyzing them later\u2014practice saying "I feel angry" or "I feel sad" as it is happening, even if it feels awkward',
+      'Challenge the scarcity narrative by tracking the evidence that engagement with the world actually replenishes rather than depletes you\u2014notice that connection and action generate energy rather than consuming it'
+    ],
+    levels: {
+      1: 'Level 1 (Liberation): Become visionary pioneers who see reality with extraordinary clarity. They make groundbreaking discoveries and offer the world profound, original insights that reshape understanding.',
+      2: 'Level 2 (Psychological Capacity): Observant, perceptive, and curious, with an extraordinary ability to concentrate. They are drawn to understanding how things work and can hold complex ideas with ease.',
+      3: 'Level 3 (Social Value): Innovative, inventive, and producing original work. They become expert in their chosen fields, making significant intellectual contributions and offering unique perspectives that others value.',
+      4: 'Level 4 (Imbalance): Begin to specialize and conceptualize extensively. They become more detached, preoccupied with their thoughts, and start to pull back from active engagement with the world.',
+      5: 'Level 5 (Interpersonal Control): Increasingly provocative and abrasive in their ideas. They become intellectually arrogant, dismissive of others\' intelligence, and use knowledge as a weapon to maintain distance.',
+      6: 'Level 6 (Overcompensation): Extremely reclusive and eccentric. They become antagonistic toward the world, rejecting social conventions entirely and retreating into increasingly abstract or dark mental territory.',
+      7: 'Level 7 (Violation): Isolated, unstable, and erratic. They become obsessed with bizarre, disturbing ideas and may develop paranoid delusions about threats from the outside world.',
+      8: 'Level 8 (Delusion and Compulsion): Schizoid and out of touch with reality. They become terrified of the world and may develop phobias, compulsions, and elaborate delusional systems to explain their isolation.',
+      9: 'Level 9 (Pathological Destructiveness): Seek total oblivion and may become suicidal. They feel completely unable to cope with reality and may retreat into psychosis or destroy themselves rather than face the world.'
+    }
+  },
+  6: {
+    name: 'The Loyalist',
+    color: '#ff8a65',
+    triad: 'thinking',
+    subtitle: 'The Committed, Security-Oriented Type',
+    basicFear: 'Of being without support and guidance',
+    basicDesire: 'To have security and support',
+    keyMotivations: 'Want to have security, to feel supported by others, to have certitude and reassurance, to test the attitudes of others toward them, to fight against anxiety and insecurity.',
+    desc: 'Sixes are reliable, hard-working, responsible, and trustworthy. Excellent troubleshooters, they foresee problems and foster cooperation, but can also become defensive, evasive, and anxious.',
+    longDesc: 'Sixes are engaging, responsible, anxious, and suspicious. They are the most common Enneagram type and the most difficult to describe because their behavior varies so widely depending on whether they respond to fear with compliance or defiance. At their best, Sixes are courageous, loyal, and deeply committed to the people and causes they believe in\u2014they are the backbone of communities and organizations. However, at average and unhealthy levels, their anxiety drives them to seek external structures of security\u2014authorities, belief systems, groups\u2014while simultaneously questioning and testing those very structures. The core issue for Sixes is fear itself: they scan for danger, anticipate worst-case scenarios, and struggle to trust their own judgment, creating a self-fulfilling cycle of anxiety and doubt.',
+    strengths: [
+      'Exceptionally loyal and committed to the people, groups, and causes they believe in, standing firm even when others flee',
+      'Excellent at anticipating problems and developing contingency plans, making them invaluable troubleshooters and risk managers',
+      'Responsible and dependable, following through on commitments and building trust through consistent, reliable behavior over time',
+      'Courageous in the face of fear, often showing remarkable bravery precisely because they have confronted their anxiety rather than pretending it does not exist',
+      'Strong team players who value cooperation, fairness, and the well-being of the group over individual glory'
+    ],
+    challenges: [
+      'Chronic anxiety and worst-case thinking that can paralyze decision-making and create stress for themselves and everyone around them',
+      'Difficulty trusting their own judgment, leading to excessive reliance on external authorities, rules, and opinions for guidance',
+      'Suspicion and projection\u2014attributing their own doubts, fears, and negative intentions to others, then reacting to their projections as though they were real',
+      'Indecisiveness and second-guessing, oscillating between commitment and doubt in a way that frustrates partners, colleagues, and friends',
+      'Reactivity and defensiveness when feeling threatened, sometimes sabotaging the very security they seek by provoking conflicts to test others\' loyalty'
+    ],
+    leadership: 'Sixes lead through loyalty, preparation, and the creation of secure, supportive team environments. They excel at risk assessment, building consensus, and fostering the kind of trust and mutual commitment that produces resilient organizations. Their awareness of potential problems makes them excellent at governance, compliance, and strategic planning. However, they must guard against analysis paralysis, excessive caution, and a tendency to project their anxiety onto the team. The best Six leaders learn to trust their own authority, make decisive calls when needed, and channel their awareness of risk into prudent action rather than chronic worry.',
+    growth: 9,
+    stress: 3,
+    wings: [5, 7],
+    wingDescriptions: {
+      5: 'The Six with a Five wing (6w5) is sometimes called "The Defender." This subtype combines the Six\'s loyalty and security-seeking with the Five\'s intellectual depth and independence, creating someone who is analytical, serious, and more introverted than the 6w7. They tend to be more cautious, self-reliant, and focused on building expertise as a source of security. They are drawn to systems, technology, and areas where thorough knowledge reduces risk. The Five wing adds intellectual rigor, depth of focus, and a more solitary quality, but it can also intensify the Six\'s anxiety, suspicion, and tendency toward worst-case thinking, making them more pessimistic and withdrawn.',
+      7: 'The Six with a Seven wing (6w7) is sometimes called "The Buddy." This subtype combines the Six\'s loyalty and security-orientation with the Seven\'s sociability, optimism, and desire for fun, creating someone who is more outgoing, engaging, and lighthearted than the 6w5. They tend to be funnier, more adventurous, and more comfortable in social situations, using humor and warmth to build the connections that provide security. They are often the glue of friend groups and social circles. The Seven wing adds energy, playfulness, and a more optimistic outlook, but it can also make the Six more scattered, impulsive, and prone to avoiding difficult emotions through distraction and entertainment.'
+    },
+    growthDesc: 'In growth, Sixes move toward the healthy qualities of Type Nine. They develop inner peace, relaxation, and the ability to trust\u2014both themselves and the world. Instead of constantly scanning for danger and preparing for worst-case scenarios, they learn to be present, grounded, and accepting. Their chronic anxiety gives way to a calm steadiness, and they discover that genuine security comes not from external structures or constant vigilance but from an inner sense of groundedness and trust in the unfolding of life. They become more receptive, more easygoing, and more able to take things as they come.',
+    stressDesc: 'Under stress, Sixes take on the unhealthy qualities of Type Three. They become competitive, image-conscious, and driven to prove themselves through achievement and performance. Their usual warmth and cooperation give way to a cold, calculating pursuit of success as a way of overcoming their insecurity. They may become workaholics, boasting about their accomplishments and seeking validation through status and recognition. The underlying anxiety is still there, but instead of expressing it as doubt, they mask it with a false confidence and a frantic drive to succeed that feels hollow and disconnected from their true values.',
+    securityDesc: 'When Sixes feel safe and comfortable, they can move to the average qualities of Type Nine. Rather than accessing Nine\'s healthy peace and groundedness, they may become passive, disengaged, and complacent. They might numb out, avoid dealing with problems, and go along with whatever others want rather than asserting their own needs and opinions. This can look like laziness, procrastination, or a stubborn refusal to engage with issues that clearly need attention. It is as though the Six\'s usual hypervigilance suddenly switches off completely, replaced by an unhealthy inertia. They may use comfort activities\u2014television, snacking, sleeping\u2014to avoid the anxiety that normally drives their productivity.',
+    passion: 'Angst (Fear)',
+    passionDesc: 'The passion of the Six is fear\u2014not simply the experience of being afraid in dangerous situations, but a pervasive, chronic anxiety that colors their entire relationship with life. Sixes experience the world as fundamentally threatening and uncertain, and they are always scanning for what could go wrong. This fear manifests differently depending on whether the Six responds phobically (through avoidance and compliance) or counterphobically (through confrontation and defiance), but the underlying emotional engine is the same: a deep distrust of life\'s reliability and their own capacity to handle whatever comes. The fear is self-reinforcing because the Six\'s hypervigilance and worst-case thinking actually create much of the anxiety they are trying to protect against.',
+    hiddenSide: 'Beneath the anxious, questioning exterior, Sixes often possess a fierce inner strength and courage that they do not recognize in themselves. Many Sixes are far braver than they realize\u2014they are the type most likely to run toward danger to protect others, precisely because they have spent their lives facing their fears. The hidden truth of the Six is that their obsessive search for security and certainty is driven by a paradoxical desire for something they can trust absolutely\u2014and the thing they need most to trust is themselves. Their greatest fear is not external danger but the possibility that when the moment comes, they will not be enough. Ironically, Sixes are often the most reliable, courageous, and trustworthy people in any room\u2014the last to abandon ship and the first to sacrifice for others.',
+    relationshipIssues: [
+      'Testing their partner\'s loyalty and commitment through provocation, suspicion, or withdrawal, then interpreting the partner\'s frustrated reaction as proof that they cannot be trusted',
+      'Projecting their own fears and insecurities onto their partner\u2014assuming negative intentions, reading threat into innocent comments, and creating conflict based on imagined rather than real problems',
+      'Oscillating between clinging dependency and fierce independence, confusing their partner with mixed signals about how much closeness they want',
+      'Difficulty making decisions within the relationship, seeking their partner\'s input on everything while simultaneously resenting being told what to do',
+      'Becoming reactive and defensive when they feel their security is threatened, sometimes escalating minor disagreements into major confrontations because anxiety amplifies everything'
+    ],
+    growthRecs: [
+      'Practice making small decisions quickly and without seeking others\' opinions\u2014build the muscle of self-trust by acting on your own judgment in low-stakes situations and observing the results',
+      'When you notice yourself spinning worst-case scenarios, challenge yourself to generate an equal number of best-case scenarios\u2014train your mind to hold multiple possibilities rather than fixating on threat',
+      'Develop a somatic mindfulness practice\u2014meditation, yoga, or breathwork\u2014that helps you distinguish between genuine danger signals and anxiety-generated false alarms in your body',
+      'Notice when you are projecting your fears onto others and practice checking your assumptions directly rather than building elaborate mental cases based on ambiguous evidence',
+      'Commit to one authority figure, belief system, or inner conviction and practice trusting it for an extended period without second-guessing\u2014experience what it feels like to rest rather than constantly questioning'
+    ],
+    phobicCounterphobic: 'Some Sixes tend to collapse into their anxiety more often, feeling fearful, anxious, dependent, and openly seeking support from others. These are called \'phobic Sixes.\' Other Sixes are more apt to impulsively leap into activities connected with their fears\u2014such as a person with a fear of heights who decides to take up rock climbing, or a person who fears authority figures becoming a spokesperson for an anti-establishment group. These are called \'counterphobic Sixes.\' In truth, all Sixes have both phobic and counterphobic aspects, and they express their different responses in different areas of their lives. A Six might be phobic around her boss, for instance, but behave counterphobically with her spouse.',
+    levels: {
+      1: 'Level 1 (Liberation): Become self-affirming, trusting of self and others, and internally stable. They embody true courage\u2014not the absence of fear, but the willingness to act with conviction despite it.',
+      2: 'Level 2 (Psychological Capacity): Engaging, likeable, and endearing. They form strong bonds of trust and loyalty, creating security through genuine connection rather than external structures.',
+      3: 'Level 3 (Social Value): Committed and reliable, they become excellent team members and community builders. They are hard-working, responsible, and willing to sacrifice personal comfort for the good of the group.',
+      4: 'Level 4 (Imbalance): Begin to invest heavily in systems and alliances for security. They become more dependent on external structures and start to doubt their own ability to navigate without guidance.',
+      5: 'Level 5 (Interpersonal Control): Become ambivalent, indecisive, and reactive. They oscillate between compliance and defiance, seeking authority while also resisting it, creating confusion for themselves and others.',
+      6: 'Level 6 (Overcompensation): Authoritarian, mean-spirited, and bigoted. They become rigidly us-versus-them in their thinking, scapegoating outsiders and enforcing conformity within their group through fear and intimidation.',
+      7: 'Level 7 (Violation): Become panicky, volatile, and self-destructive. They lash out irrationally, becoming paranoid and feeling persecuted by a hostile world that they believe is conspiring against them.',
+      8: 'Level 8 (Delusion and Compulsion): Develop debilitating anxiety, phobias, and delusions of persecution. They may cling to destructive relationships or ideologies, becoming fanatical because abandoning them would mean facing the void alone.',
+      9: 'Level 9 (Pathological Destructiveness): Hysterical and completely self-defeating. They may become masochistic, bringing about the very catastrophe they feared by their own desperate, irrational actions\u2014or turning their destructiveness inward in suicidal despair.'
+    }
+  },
+  7: {
+    name: 'The Enthusiast',
+    color: '#ffb74d',
+    triad: 'thinking',
+    subtitle: 'The Busy, Fun-Loving Type',
+    basicFear: 'Of being deprived and in pain',
+    basicDesire: 'To be satisfied and content, to have their needs fulfilled',
+    keyMotivations: 'Want to maintain their freedom and happiness, to avoid missing out on worthwhile experiences, to keep themselves excited and occupied, to avoid and discharge pain.',
+    desc: 'Sevens are extroverted, optimistic, versatile, and spontaneous. Playful, high-spirited, and practical, they can also misapply their many talents, becoming over-extended, scattered, and undisciplined.',
+    longDesc: 'Sevens are busy, fun-loving, spontaneous, and scattered. They are motivated by the desire to be happy, to plan exciting possibilities, and to avoid pain, boredom, and limitation. At their best, Sevens are grateful, joyous, and deeply satisfied\u2014they embrace life with an infectious enthusiasm that uplifts everyone around them and they become accomplished in multiple areas through their genuine curiosity and quick intelligence. However, at average and unhealthy levels, they become addicted to stimulation, using constant activity, planning, and consumption as a way to avoid facing their inner pain and anxiety. The core issue for Sevens is the fear that if they stop moving, stop planning, and stop consuming new experiences, they will be trapped in an unbearable darkness of deprivation, boredom, and suffering.',
+    strengths: [
+      'Enthusiastic and optimistic, with a contagious energy that inspires others and brings levity to even the most stressful situations',
+      'Quick-minded and versatile, able to synthesize ideas from multiple domains and see creative connections that others miss',
+      'Resilient and future-oriented, able to reframe setbacks as opportunities and maintain momentum when others become discouraged',
+      'Adventurous and open to new experiences, bringing freshness and excitement to work, relationships, and daily life',
+      'Practical and productive, able to generate ideas rapidly and take action on multiple fronts simultaneously'
+    ],
+    challenges: [
+      'Difficulty with commitment and follow-through, constantly moving to the next exciting thing before finishing what they started',
+      'Avoiding pain, discomfort, and negative emotions by staying busy, which prevents them from processing grief, loss, and difficult experiences',
+      'Scattered attention and overextension, taking on too many projects and commitments until the quality of everything suffers',
+      'Impulsivity and excess, consuming experiences, substances, and stimulation in a way that becomes addictive and self-destructive',
+      'Minimizing others\' pain and problems with premature positivity, making people feel dismissed rather than supported'
+    ],
+    leadership: 'Sevens lead through vision, enthusiasm, and creative innovation. They excel at brainstorming, generating excitement for new initiatives, and creating energizing work environments where people enjoy coming to work. Their optimism and resilience are invaluable during periods of change and uncertainty. However, they must guard against starting too many initiatives, losing interest in the implementation phase, and avoiding the difficult conversations and painful decisions that leadership requires. The best Seven leaders learn to balance their visionary energy with disciplined follow-through and to create space for team members to express concerns without being dismissed as negative.',
+    growth: 5,
+    stress: 1,
+    wings: [6, 8],
+    wingDescriptions: {
+      6: 'The Seven with a Six wing (7w6) is sometimes called "The Entertainer." This subtype combines the Seven\'s enthusiasm and desire for variety with the Six\'s loyalty, warmth, and orientation toward relationships and community. They tend to be more social, funny, and group-oriented than the 7w8, with a greater need for connection and belonging. They are often the life of the party\u2014witty, engaging, and dedicated to making sure everyone has a good time. The Six wing adds warmth, loyalty, and a playful but slightly anxious quality, but it can also make the Seven more dependent on others\' approval and more anxious beneath their cheerful exterior, leading to nervous humor and people-pleasing.',
+      8: 'The Seven with an Eight wing (7w8) is sometimes called "The Realist." This subtype combines the Seven\'s enthusiasm and mental agility with the Eight\'s assertiveness, confidence, and desire for power, creating someone who is more forceful, materialistic, and driven than the 7w6. They tend to be bold, enterprising, and competitive, with a larger-than-life quality that commands attention. They are drawn to business, entrepreneurship, and high-stakes environments. The Eight wing adds power, determination, and a willingness to fight for what they want, but it can also amplify the Seven\'s tendency toward excess, aggression, and insensitivity, making them more demanding and less concerned about the impact of their behavior on others.'
+    },
+    growthDesc: 'In growth, Sevens move toward the healthy qualities of Type Five. They develop depth, focus, and the ability to stay with one thing long enough to truly master it. Instead of constantly seeking new stimulation, they learn to find richness in concentration and depth of experience. They become more contemplative, more comfortable with solitude, and more able to sit with difficult emotions rather than fleeing from them. Their natural intelligence, previously scattered across many interests, deepens into genuine expertise and wisdom. They discover that true satisfaction comes not from having more but from fully inhabiting what is already here.',
+    stressDesc: 'Under stress, Sevens take on the unhealthy qualities of Type One. They become critical, perfectionistic, and rigidly judgmental\u2014a stark contrast to their usual easygoing nature. Their characteristic flexibility hardens into black-and-white thinking, and they become fixated on what is wrong with their situation rather than what is exciting about it. They may become controlling, preachy, and irritable, lashing out at others who do not meet their suddenly exacting standards. The fun-loving adventurer transforms into a tightly wound critic, furious at the world for failing to provide the happiness they feel entitled to.',
+    securityDesc: 'When Sevens feel safe and comfortable, they can move to the average qualities of Type Five. Rather than accessing Five\'s healthy depth and focus, they may become detached, stingy, and emotionally withdrawn. They might pull back from social engagement, become mentally preoccupied and unavailable, or hoard their time and resources in ways that surprise those accustomed to their usual generosity. This can manifest as canceling plans, becoming secretive about their activities, or retreating into solitary pursuits that shut out the people closest to them. It is as though the normally expansive Seven suddenly contracts, using withdrawal rather than activity as an avoidance strategy.',
+    passion: 'Gluttony',
+    passionDesc: 'The passion of the Seven is gluttony\u2014not simply for food, but for experience, stimulation, ideas, and pleasure of all kinds. Sevens feel a chronic sense of inner emptiness that they attempt to fill by consuming more of everything: more adventures, more projects, more conversations, more plans, more sensory input. This gluttony is driven by an underlying anxiety that what they have is not enough and that missing out on any experience means missing out on the one thing that might finally make them feel satisfied. The irony is that their constant consumption prevents them from ever fully digesting any single experience, creating the very dissatisfaction they are trying to escape.',
+    hiddenSide: 'Beneath the sunny, enthusiastic exterior, Sevens often carry a deep well of pain, grief, and anxiety that they have spent their lives running from. Many Sevens experienced significant loss, deprivation, or emotional neglect in childhood that taught them that dwelling on pain is dangerous and that happiness must be actively generated. The hidden truth of the Seven is that their compulsive optimism and constant activity are not expressions of genuine joy but sophisticated defenses against an inner darkness they fear would swallow them if they stopped moving. In rare quiet moments, Sevens may feel a profound sadness and emptiness that horrifies them\u2014it is this fleeting glimpse of their inner void that sends them racing back to the next exciting plan or experience.',
+    relationshipIssues: [
+      'Difficulty being fully present with their partner, constantly planning the next activity, checking their phone, or mentally elsewhere rather than engaging with what is happening now',
+      'Avoiding difficult emotional conversations by changing the subject, making jokes, or reframing problems as opportunities, making their partner feel dismissed and unheard',
+      'Struggling with the routine and mundane aspects of a long-term relationship, becoming restless and dissatisfied when the initial excitement fades and day-to-day life sets in',
+      'Overcommitting to social activities, travel, and projects outside the relationship, leaving their partner feeling like one of many items on a crowded agenda rather than a priority',
+      'Minimizing their partner\'s pain or negative experiences with premature positivity\u2014saying things like "look on the bright side" when what their partner needs is empathy and validation'
+    ],
+    growthRecs: [
+      'Practice staying with one activity, conversation, or experience until it is truly complete rather than moving on when your interest begins to wane\u2014depth requires the willingness to be bored',
+      'When painful emotions arise, resist the urge to distract yourself and instead sit with the feeling for a full five minutes, breathing into it and allowing it to be present without trying to fix or escape it',
+      'Simplify your schedule deliberately\u2014cancel something you said yes to and use the freed time for silence, stillness, or a single focused activity rather than filling it with something else',
+      'Develop a contemplative practice\u2014meditation, journaling, or silent walks\u2014that builds your capacity to be present with what is rather than constantly reaching for what could be',
+      'Tell someone you trust about a pain or loss you have been avoiding, and let yourself be supported without deflecting with humor or shifting to the positive\u2014experience being held in your vulnerability'
+    ],
+    levels: {
+      1: 'Level 1 (Liberation): Become deeply grateful, present, and joyful. They embrace life fully\u2014including its pain and limitations\u2014finding ecstatic happiness in the miracle of existence itself rather than in external stimulation.',
+      2: 'Level 2 (Psychological Capacity): Enthusiastic, curious, and quick-minded. They respond to the world with genuine wonder and delight, generating ideas and possibilities from a place of abundance rather than fear.',
+      3: 'Level 3 (Social Value): Productive, accomplished, and versatile. They become accomplished in multiple areas, using their breadth of talent and enthusiasm to create genuine value and uplift those around them.',
+      4: 'Level 4 (Imbalance): Begin to fear that they will miss out on something better. They become more acquisitive and consumer-oriented, seeking variety and stimulation to ward off a growing sense of dissatisfaction.',
+      5: 'Level 5 (Interpersonal Control): Hyperactive, uninhibited, and scattered. They become excessive in their pursuit of pleasure, overextending themselves and using humor, charm, and constant activity to avoid facing inner emptiness.',
+      6: 'Level 6 (Overcompensation): Self-centered, materialistic, and insensitive. They demand that the world provide them with constant entertainment and become angry and impulsive when frustrated, acting out in infantile ways.',
+      7: 'Level 7 (Violation): Impulsive, infantile, and offensive. They become escapist, addictive, and reckless\u2014pursuing ever-more-extreme experiences to outrun a growing desperation and inner panic.',
+      8: 'Level 8 (Delusion and Compulsion): Manic, out of control, and wildly erratic. They become trapped in addictive cycles, oscillating between frenetic activity and paralyzing anxiety as their defenses collapse.',
+      9: 'Level 9 (Pathological Destructiveness): Panic-stricken, claustrophobic, and completely overwhelmed. They may become debilitated by terror and despair, or destroy themselves through overdoses, reckless accidents, or other consequences of their desperate flight from pain.'
+    }
+  },
+  8: {
+    name: 'The Challenger',
+    color: '#e57373',
+    triad: 'instinctive',
+    subtitle: 'The Powerful, Dominating Type',
+    basicFear: 'Of being harmed or controlled by others',
+    basicDesire: 'To protect themselves, to be in control of their own life and destiny',
+    keyMotivations: 'Want to be self-reliant, to prove their strength and resist weakness, to be important in their world, to dominate the environment, and to stay in control of their situation.',
+    desc: 'Eights are self-confident, strong, and assertive. Protective, resourceful, straight-talking, and decisive, but can also be ego-centric and domineering.',
+    longDesc: 'Eights are powerful, dominating, self-confident, and confrontational. They are the most forceful type on the Enneagram, driven by a deep need to be strong, to protect themselves, and to resist being controlled or harmed by anyone. At their best, Eights are magnanimous, heroic, and deeply protective\u2014using their considerable power to champion the weak and challenge injustice. They are natural leaders who inspire loyalty through their directness, courage, and willingness to take charge in any situation. However, at average and unhealthy levels, they become domineering, intimidating, and destructive\u2014using force and control to avoid vulnerability. The core issue for Eights is the equation of vulnerability with weakness and the belief that in a hostile world, the only safe position is one of strength and dominance.',
+    strengths: [
+      'Decisively confident and action-oriented, able to make tough decisions quickly and take responsibility for the outcomes',
+      'Fiercely protective of those they care about, willing to fight for the underdog and stand up against injustice even at personal cost',
+      'Honest, direct, and straightforward in their communication, creating clarity and trust through their refusal to play political games',
+      'Resilient and resourceful under pressure, thriving in crisis situations where others freeze or retreat',
+      'Charismatic and commanding, with a natural ability to inspire and mobilize others toward bold, ambitious goals'
+    ],
+    challenges: [
+      'Domineering and controlling behavior that intimidates others and shuts down the input, autonomy, and creativity of those around them',
+      'Difficulty with vulnerability, tenderness, and emotional intimacy because showing softness feels like exposing weakness in a dangerous world',
+      'Excessive intensity and confrontational style that can escalate conflicts unnecessarily and damage relationships that matter to them',
+      'Black-and-white thinking about power dynamics\u2014seeing every situation through the lens of who is strong and who is weak, who controls and who is controlled',
+      'Denial of their own fear, sadness, and neediness, projecting an image of invulnerability that isolates them from the support and connection they actually crave'
+    ],
+    leadership: 'Eights are natural-born leaders who command respect through their decisiveness, directness, and willingness to take on challenges that others avoid. They create results-oriented cultures where people know where they stand and what is expected. Their protectiveness and sense of justice can create fierce loyalty among their teams. However, they must guard against ruling through intimidation, making all decisions unilaterally, and creating a culture of fear where no one dares to disagree. The best Eight leaders learn to listen more than they speak, delegate genuine authority, and create space for vulnerability and dissent as sources of strength rather than weakness.',
+    growth: 2,
+    stress: 5,
+    wings: [7, 9],
+    wingDescriptions: {
+      7: 'The Eight with a Seven wing (8w7) is sometimes called "The Maverick." This subtype combines the Eight\'s power and assertiveness with the Seven\'s energy, enthusiasm, and appetite for experience, creating someone who is bold, dynamic, and larger than life. They tend to be more extroverted, entrepreneurial, and risk-taking than the 8w9, with a restless energy and an appetite for adventure, challenge, and excess. They are often drawn to business, entertainment, and high-stakes environments. The Seven wing adds charisma, humor, and expansiveness, but it can also amplify the Eight\'s tendency toward excess, impulsivity, and insensitivity, making them more materialistic, self-indulgent, and difficult to restrain.',
+      9: 'The Eight with a Nine wing (8w9) is sometimes called "The Bear." This subtype combines the Eight\'s strength and assertiveness with the Nine\'s groundedness, patience, and desire for peace, creating someone who is powerful but calm\u2014a quiet force rather than a loud one. They tend to be more introverted, steady, and approachable than the 8w7, with a more contained energy that can erupt with surprising force when provoked. They are often drawn to leadership roles where they can protect and guide others with a steady hand. The Nine wing adds patience, receptivity, and a disarming gentleness, but it can also amplify the Eight\'s stubbornness and make them slower to acknowledge their own aggression, leading to a pattern of suppression followed by explosive outbursts.'
+    },
+    growthDesc: 'In growth, Eights move toward the healthy qualities of Type Two. They develop tenderness, empathy, and the ability to use their power in service of others without needing to dominate. Instead of maintaining their fortress of invulnerability, they learn to open their hearts and let others in\u2014sharing their vulnerability as a gift rather than guarding it as a liability. They become more caring, more nurturing, and more willing to admit that they need others, discovering that true strength includes the courage to be gentle, to ask for help, and to love without conditions.',
+    stressDesc: 'Under stress, Eights take on the unhealthy qualities of Type Five. They become withdrawn, secretive, and emotionally detached\u2014a stark contrast to their usual bold, confrontational style. They retreat into isolation, becoming suspicious and paranoid, hoarding information and resources while cutting themselves off from the people who could actually help them. Their usual decisiveness gives way to a paralyzed, fearful rumination as they try to think their way out of problems rather than acting. The powerhouse who once charged into every battle suddenly hides behind closed doors, watching and calculating but unable to engage.',
+    securityDesc: 'When Eights feel safe and comfortable, they can move to the average qualities of Type Two. Rather than accessing Two\'s healthy generosity and emotional warmth, they may become possessive, controlling in their caring, and intrusive. They might overwhelm the people they love with unsolicited help and advice, becoming domineering in their nurturing and expecting gratitude and loyalty in return. This can manifest as controlling a partner\'s decisions "for their own good," giving gifts with hidden strings attached, or becoming jealous and possessive when the people they care about show independence. It is as though the Eight\'s characteristic control shifts from domination to smothering, but the underlying dynamic of power and dependency remains.',
+    passion: 'Lust',
+    passionDesc: 'The passion of the Eight is lust\u2014not solely in the sexual sense, but as an intense desire for power, stimulation, control, and the raw experience of being alive. Eights want to feel the full force of existence: they eat too much, drink too much, work too hard, fight too fiercely, love too intensely, and push every experience to its maximum. This lust is driven by the belief that they must constantly assert their presence and power to avoid being diminished, controlled, or harmed. It manifests as an excess of force in everything they do\u2014a compulsion to push through limits, override obstacles, and dominate their environment through the sheer intensity of their will and appetites.',
+    hiddenSide: 'Beneath the tough, invulnerable exterior, Eights harbor a tender, sensitive heart that they protect with ferocious determination. Many Eights were hurt deeply in childhood\u2014by abuse, betrayal, or an environment that punished vulnerability\u2014and they vowed never to be in that position again. The hidden truth of the Eight is that their aggression and dominance are not expressions of confidence but of fear\u2014fear that if they let down their guard for even a moment, they will be devastated by the same helplessness and pain they experienced as children. In their most private moments, many Eights feel a profound loneliness and a desperate longing to be held and loved without having to be strong. Their toughest exterior often conceals the most tender interior.',
+    relationshipIssues: [
+      'Dominating the relationship through force of personality, making most decisions unilaterally and leaving their partner feeling powerless and unheard',
+      'Difficulty expressing vulnerability, tenderness, and emotional needs, creating a relationship where physical presence substitutes for emotional intimacy',
+      'Escalating conflicts through confrontational intensity, saying harsh things in anger that damage trust and leave their partner feeling unsafe',
+      'Testing their partner\'s strength and loyalty through provocation, disrespecting or pushing them to see if they will stand up or submit',
+      'Becoming possessive and controlling in the name of protection, restricting their partner\'s autonomy and social connections out of a need to maintain power in the relationship'
+    ],
+    growthRecs: [
+      'Practice allowing yourself to feel and express vulnerability with someone you trust\u2014start by sharing a fear, a hurt, or a moment of uncertainty, and notice that letting people in does not destroy you',
+      'When you feel the urge to escalate a conflict, pause and ask yourself what you are actually feeling underneath the anger\u2014often there is hurt, fear, or sadness that the anger is protecting',
+      'Develop the habit of asking others for their input and genuinely listening before making decisions, especially when you believe you already know the right answer',
+      'Practice gentleness in small ways\u2014lowering your voice, softening your body language, letting someone else lead\u2014and observe how this changes the energy in your relationships',
+      'Notice when you are using excess\u2014in food, drink, work, or conflict\u2014as a way to avoid feeling something painful, and experiment with sitting with the feeling instead of overriding it'
+    ],
+    levels: {
+      1: 'Level 1 (Liberation): Become magnanimous, merciful, and heroic. They use their power to protect the weak and champion justice, mastering themselves rather than dominating others. They are deeply courageous and self-surrendering.',
+      2: 'Level 2 (Psychological Capacity): Self-assertive, confident, and strong. They have a natural authority and resourcefulness, approaching life with a directness and decisiveness that inspires confidence in others.',
+      3: 'Level 3 (Social Value): Decisive, authoritative, and commanding. They become natural leaders who use their power constructively\u2014building, protecting, and providing for others with honor and generosity.',
+      4: 'Level 4 (Imbalance): Begin to want to assert dominance over their environment. They become more enterprising and pragmatic but also more competitive, seeing life through the lens of power and control.',
+      5: 'Level 5 (Interpersonal Control): Domineering, forceful, and confrontational. They impose their will on others, become combative and intimidating, and refuse to back down from any challenge whether or not it matters.',
+      6: 'Level 6 (Overcompensation): Ruthless, dictatorial, and immoral. They become willing to destroy anything or anyone that threatens their control, justifying their actions as necessary for survival or protection.',
+      7: 'Level 7 (Violation): Defiant, violent, and ruthless. They become hardened and heartless, crossing moral lines without remorse and using brute force to maintain control of their crumbling empire.',
+      8: 'Level 8 (Delusion and Compulsion): Megalomaniacal, omnipotent delusions, and reckless. They develop a god-complex, believing they are above all rules and consequences, becoming increasingly brutal and self-destructive.',
+      9: 'Level 9 (Pathological Destructiveness): Sociopathic and destructive. If they cannot control their world, they will destroy it\u2014and potentially themselves\u2014rather than submit. Their vengefulness knows no bounds and they may commit acts of devastating cruelty.'
+    }
+  },
+  9: {
+    name: 'The Peacemaker',
+    color: '#81c784',
+    triad: 'instinctive',
+    subtitle: 'The Easygoing, Self-Effacing Type',
+    basicFear: 'Of loss and separation, of fragmentation',
+    basicDesire: 'To have inner stability and peace of mind',
+    keyMotivations: 'Want to create harmony in their environment, to avoid conflicts and tension, to preserve things as they are, to resist whatever would upset or disturb them.',
+    desc: 'Nines are accepting, trusting, and stable. They are usually creative, optimistic, and supportive, but can also be too willing to go along with others to keep the peace.',
+    longDesc: 'Nines are receptive, reassuring, agreeable, and complacent. They are the type most connected to the sense of inner peace and wholeness that all the types are seeking, yet ironically they achieve this by numbing themselves to their own priorities, anger, and desires. At their best, Nines are deeply connected to themselves and others, serving as mediators, healers, and unifying forces who bring people together and create genuine harmony. However, at average and unhealthy levels, they fall asleep to their own lives\u2014merging with others\' agendas, numbing themselves with comfort activities, and avoiding conflict at any cost. The core issue for Nines is the fear that asserting themselves will create conflict that threatens their connection to others and their inner peace, so they erase themselves to maintain harmony\u2014a strategy that ultimately costs them the very peace they seek.',
+    strengths: [
+      'Naturally mediating and diplomatic, with a rare ability to see all perspectives and find common ground between opposing viewpoints',
+      'Calm, stable, and reassuring presence that creates a sense of safety and belonging for the people around them',
+      'Patient and accepting of others, offering unconditional positive regard that helps people feel seen and valued without judgment',
+      'Excellent listeners who create space for others to think and feel without pressure, making them trusted confidants and counselors',
+      'Ability to synthesize diverse perspectives into unified wholes, seeing the big picture and finding solutions that include everyone'
+    ],
+    challenges: [
+      'Chronic self-neglect and self-forgetting, habitually prioritizing others\' needs and agendas over their own until they lose touch with what they actually want',
+      'Avoidance of conflict so pervasive that important issues go unaddressed, resentments build silently, and relationships deteriorate from lack of honest communication',
+      'Passive-aggressive expression of anger through stubbornness, procrastination, and silent resistance rather than direct confrontation',
+      'Numbing out through comfort activities\u2014television, food, social media, sleep\u2014as a way to avoid the anxiety of engaging with their own priorities and passions',
+      'Difficulty initiating action and making decisions, going along with whatever path of least resistance presents itself rather than choosing their own direction'
+    ],
+    leadership: 'Nines lead through inclusion, consensus-building, and the creation of harmonious, collaborative environments. They excel at listening to all stakeholders, mediating conflicts, and ensuring that every voice is heard. Their steadiness and patience create a sense of stability that teams rely on during turbulent times. However, they must guard against avoiding difficult decisions, becoming passive in the face of problems that require decisive action, and losing their own vision in the process of accommodating everyone else. The best Nine leaders learn to assert their own priorities clearly, make hard calls when consensus is not possible, and channel their natural inclusiveness into decisive, values-driven leadership.',
+    growth: 3,
+    stress: 6,
+    wings: [8, 1],
+    wingDescriptions: {
+      8: 'The Nine with an Eight wing (9w8) is sometimes called "The Referee." This subtype combines the Nine\'s desire for peace with the Eight\'s strength and assertiveness, creating someone who is more grounded, forceful, and physically present than the 9w1. They tend to be more outgoing, practical, and comfortable with power, with a stronger sense of personal boundaries and a greater willingness to confront when pushed too far. They are often drawn to roles where they can mediate from a position of strength. The Eight wing adds energy, directness, and the ability to take action, but it can also create a volatile inner tension between the Nine\'s desire for peace and the Eight\'s desire for control, producing cycles of passivity punctuated by surprising explosions of anger.',
+      1: 'The Nine with a One wing (9w1) is sometimes called "The Dreamer." This subtype combines the Nine\'s desire for harmony with the One\'s sense of purpose and idealism, creating someone who is more principled, orderly, and quietly driven than the 9w8. They tend to be more introverted, idealistic, and concerned with doing the right thing, often channeling their peacemaking through teaching, counseling, or other helping professions. The One wing adds moral seriousness, a sense of mission, and higher standards, but it can also amplify the Nine\'s inner tension by adding a critical voice to their already self-effacing nature, producing guilt about their passivity and a frustrated sense that they should be doing more.'
+    },
+    growthDesc: 'In growth, Nines move toward the healthy qualities of Type Three. They develop self-confidence, energy, and the ability to set and pursue their own goals with focus and determination. Instead of merging with others\' agendas and drifting through life, they discover their own value and ambitions and take decisive action to achieve them. They become more present, more engaged, and more willing to stand out and be seen. Their natural warmth and inclusiveness, combined with Three\'s drive and competence, allows them to become remarkably effective leaders who accomplish great things while maintaining their essential goodness and connection to others.',
+    stressDesc: 'Under stress, Nines take on the unhealthy qualities of Type Six. They become anxious, reactive, and suspicious\u2014a stark contrast to their usual calm. Their inner peace shatters and is replaced by worry, worst-case thinking, and a rigid clinging to rules and authority for guidance. They may become passive-aggressive, blaming, and surprisingly confrontational, lashing out at the people closest to them while simultaneously seeking reassurance that everything will be okay. The easygoing person who never expressed a strong opinion suddenly becomes rigid, anxious, and difficult, as the anger and anxiety they normally suppress come flooding to the surface without their usual defenses.',
+    securityDesc: 'When Nines feel safe and comfortable, they can move to the average qualities of Type Three. Rather than accessing Three\'s healthy ambition and self-development, they may become image-conscious, performative, and driven by external validation in superficial ways. They might become focused on appearing busy and productive without actually prioritizing what matters, or they may adopt a flashy persona that does not reflect their authentic self. This can manifest as bragging about accomplishments, worrying about how they appear to others, or pursuing status symbols rather than genuine goals. It is as though the Nine\'s usual groundedness gives way to a hollow striving for recognition that lacks the depth and self-awareness of genuine growth.',
+    passion: 'Sloth',
+    passionDesc: 'The passion of the Nine is sloth\u2014not physical laziness (many Nines are quite active), but a spiritual and psychological inertia that manifests as resistance to being fully present, fully engaged, and fully themselves. Nines "fall asleep" to their own lives, numbing their inner experience, avoiding their own priorities, and merging with the comfort of routine, others\' agendas, and familiar environments. This sloth is driven by the deep fear that fully waking up\u2014asserting their own needs, expressing their anger, pursuing their own dreams\u2014would create the conflict and separation they most dread. So they remain in a kind of pleasant fog, going through the motions of life without ever fully showing up, trading the vitality of authentic engagement for the comfort of autopilot.',
+    hiddenSide: 'Beneath the agreeable, peaceful exterior, Nines often carry a vast reservoir of suppressed rage that they barely acknowledge even to themselves. Many Nines are far angrier than they appear\u2014angry about being overlooked, taken for granted, and treated as though their needs do not matter. The hidden truth of the Nine is that their peacefulness is not the absence of conflict but the suppression of it, and this suppression comes at an enormous cost to their vitality, their relationships, and their sense of self. Their agreeableness is often not genuine acceptance but a form of self-erasure driven by the terrifying belief that if they showed up fully\u2014with all their desires, opinions, and anger\u2014they would be too much for the world to handle and would lose the connections they depend on for survival.',
+    relationshipIssues: [
+      'Going along with their partner\'s preferences and decisions to avoid conflict, then building silent resentment that eventually leaks out as stubbornness, withdrawal, or passive-aggressive behavior',
+      'Losing themselves in the relationship by adopting their partner\'s interests, opinions, and priorities while neglecting their own, creating an imbalanced dynamic where the Nine has no separate identity',
+      'Avoiding difficult conversations about problems in the relationship until the issues have grown so large that they feel insurmountable, leading to sudden, seemingly inexplicable ruptures',
+      'Using numbing behaviors\u2014excessive screen time, overeating, sleeping\u2014to avoid engaging with their partner and the emotional demands of the relationship',
+      'Expressing anger indirectly through forgetfulness, procrastination, and quiet non-compliance rather than directly, leaving their partner confused and frustrated by the disconnect between words and actions'
+    ],
+    growthRecs: [
+      'Practice identifying what you actually want in any given situation\u2014before asking others what they prefer, check in with yourself and formulate your own opinion, even if you choose not to voice it',
+      'Set one personal goal that is entirely your own\u2014not something anyone else wants for you\u2014and take one concrete step toward it every day, treating it as a non-negotiable commitment to yourself',
+      'When you notice the impulse to numb out or distract yourself, pause and ask what you are avoiding\u2014name the feeling or situation, and take one small action to address it directly',
+      'Practice expressing disagreement or stating a preference in low-stakes situations\u2014choosing a restaurant, picking a movie, voicing an opinion in a meeting\u2014to build the muscle of self-assertion gradually',
+      'Notice when you are merging with others\' energy, opinions, or agendas, and practice maintaining your own center by asking yourself: "What do I think? What do I feel? What do I need?"'
+    ],
+    levels: {
+      1: 'Level 1 (Liberation): Become self-possessed, all-embracing, and deeply connected to themselves and others. They are fully awake and present, embodying genuine peace that comes from engagement with life rather than avoidance of it.',
+      2: 'Level 2 (Psychological Capacity): Receptive, unself-conscious, and emotionally stable. They have a deep sense of contentment and inner peace that allows them to be genuinely present and accepting of others.',
+      3: 'Level 3 (Social Value): Supportive, optimistic, and genuinely kind. They become excellent mediators and peacemakers, creating harmony by truly seeing and including all perspectives with patience and goodwill.',
+      4: 'Level 4 (Imbalance): Begin to accommodate others to maintain peace. They become more self-effacing, idealizing their relationships and environment while ignoring problems that need attention.',
+      5: 'Level 5 (Interpersonal Control): Disengaged, complacent, and resigned. They minimize problems, go along with whatever others want, and lose themselves in routine activities and comfort habits to avoid rocking the boat.',
+      6: 'Level 6 (Overcompensation): Appeasing, fatalistic, and stubborn. They become passive-aggressive, quietly resisting others through procrastination and forgetfulness while outwardly agreeing to everything.',
+      7: 'Level 7 (Violation): Neglectful, dangerously oblivious, and dissociated. They become so checked out that they fail to respond to urgent situations, endangering themselves and others through their refusal to engage.',
+      8: 'Level 8 (Delusion and Compulsion): Repressed, undeveloped, and ineffectual. They retreat into a dissociative fog, unable to function, and may develop severe depersonalization as a defense against the overwhelming feelings they cannot process.',
+      9: 'Level 9 (Pathological Destructiveness): Completely dissociated and abandoning of self. They may become catatonic or develop multiple personalities as the self fragments under the weight of lifelong suppression. In extreme cases, they give up entirely, letting life collapse around them.'
+    }
+  }
+};
+
+/* ========================================================
+   PAIR DYNAMICS
+   ======================================================== */
+var PAIR_DYNAMICS = {
+  '1-2': { summary: 'Ones bring principled structure; Twos bring interpersonal warmth. Together they create ethical, caring teams.', tag: 'complement' },
+  '1-3': { summary: 'Both driven and hardworking. Ones focus on ethics; Threes on results. Potential tension around shortcuts vs correctness.', tag: 'challenge' },
+  '1-4': { summary: 'Connected by the stress arrow. Ones may become moody under stress. Both are idealistic\u2014Ones externally, Fours internally.', tag: 'stress' },
+  '1-7': { summary: 'Connected by the growth arrow. Healthy Ones take on the spontaneity and joy of Sevens. Powerful for innovation.', tag: 'growth' },
+  '1-8': { summary: 'Both Instinctive Center types with strong convictions. Can be powerfully aligned or locked in stubborn conflict.', tag: 'challenge' },
+  '2-3': { summary: 'Feeling Center pair. Both people-oriented. Twos nurture; Threes inspire. Risk: performing rather than connecting.', tag: 'complement' },
+  '2-4': { summary: 'Connected by the growth arrow. Healthy Twos develop the self-awareness of Fours. Balances others-focus with self-knowledge.', tag: 'growth' },
+  '2-8': { summary: 'Connected by the stress arrow. Under pressure, Twos can become aggressive like Eights. When healthy, a powerful protector-nurturer combo.', tag: 'stress' },
+  '3-6': { summary: 'Connected by the growth arrow. Healthy Threes develop the loyalty and team focus of Sixes. Balances ambition with dedication.', tag: 'growth' },
+  '3-9': { summary: 'Connected by the stress arrow. Under pressure, Threes disengage like Nines. When healthy, Threes drive action, Nines ensure buy-in.', tag: 'stress' },
+  '4-5': { summary: 'Both withdrawn types. Deep intellectual and emotional connection. Fours bring feeling; Fives bring analysis. May withdraw together.', tag: 'complement' },
+  '5-7': { summary: 'Connected by the stress arrow. Under pressure, Fives scatter like Sevens. When healthy, depth meets breadth\u2014powerful brainstorming.', tag: 'stress' },
+  '5-8': { summary: 'Connected by the growth arrow. Healthy Fives step into the confidence of Eights. Balances contemplation with action.', tag: 'growth' },
+  '6-9': { summary: 'Connected by the growth arrow. Healthy Sixes develop the inner peace of Nines. Balances vigilance with acceptance.', tag: 'growth' },
+  '7-1': { summary: 'Connected by the stress arrow. Under pressure, Sevens become critical like Ones. When balanced, vision meets implementation.', tag: 'stress' },
+  '8-9': { summary: 'Instinctive Center pair. Eights bring force; Nines bring diplomacy. Complementary protector and mediator.', tag: 'complement' }
+};
+
+/* ========================================================
+   CONSTANTS & STATE
+   ======================================================== */
+var TYPE_ANGLES = { 9: -90, 1: -50, 2: -10, 3: 30, 4: 70, 5: 110, 6: 150, 7: 190, 8: 230 };
+var GROWTH_LINES = [[1,7],[2,4],[3,6],[4,1],[5,8],[6,9],[7,5],[8,2],[9,3]];
+var STRESS_LINES = [[1,4],[2,8],[3,9],[4,2],[5,7],[6,3],[7,1],[8,5],[9,6]];
+var TRIAD_INFO = {
+  thinking: { name: 'Thinking (Head)', types: [5,6,7], emotion: 'Fear' },
+  feeling: { name: 'Feeling (Heart)', types: [2,3,4], emotion: 'Shame' },
+  instinctive: { name: 'Instinctive (Gut)', types: [8,9,1], emotion: 'Anger' }
+};
+
+var participants = [];
+var nextId = 1;
+var currentView = 'distribution';
+var expandedCard = null;
+var scoresVisible = false;
+
+/* ========================================================
+   INITIALIZATION
+   ======================================================== */
+function init() {
+  loadFromStorage();
+  populateTypeSelect();
+  buildScoresGrid();
+  buildFacScoresGrid();
+  buildGuide();
+  render();
+  loadFacilitator();
+}
+
+function loadFromStorage() {
+  try {
+    var saved = localStorage.getItem('enneagram_participants');
+    if (saved) {
+      participants = JSON.parse(saved);
+      nextId = participants.length > 0 ? Math.max.apply(null, participants.map(function(p) { return p.id; })) + 1 : 1;
+    }
+  } catch(e) { console.error('Failed to load participants', e); }
+}
+
+function saveToStorage() {
+  try {
+    localStorage.setItem('enneagram_participants', JSON.stringify(participants));
+  } catch(e) { console.error('Failed to save participants', e); }
+}
+
+/* ========================================================
+   TAB SWITCHING
+   ======================================================== */
+function switchTab(tab) {
+  document.querySelectorAll('.page-tab').forEach(function(t) { t.classList.toggle('active', t.dataset.tab === tab); });
+  document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.toggle('active', c.id === 'tab-' + tab); });
+  if (tab === 'profiles') renderProfiles();
+  if (tab === 'dashboard') drawEnneagram();
+}
+
+/* ========================================================
+   FORM SETUP
+   ======================================================== */
+function populateTypeSelect() {
+  var sel = document.getElementById('pType');
+  for (var i = 1; i <= 9; i++) {
+    var opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = 'Type ' + i + ': ' + EXTENDED_TYPE_DATA[i].name;
+    sel.appendChild(opt);
+  }
+  sel.addEventListener('change', updateWingSelect);
+  updateWingSelect();
+}
+
+function updateWingSelect() {
+  var typeVal = document.getElementById('pType').value;
+  var wingSel = document.getElementById('pWing');
+  wingSel.innerHTML = '<option value="">-- Auto-detect --</option>';
+  if (typeVal) {
+    var t = parseInt(typeVal);
+    var td = EXTENDED_TYPE_DATA[t];
+    if (td && td.wings) {
+      td.wings.forEach(function(w) {
+        var opt = document.createElement('option');
+        opt.value = w;
+        opt.textContent = 'Wing ' + w + ': ' + EXTENDED_TYPE_DATA[w].name;
+        wingSel.appendChild(opt);
+      });
+    }
+  }
+}
+
+function buildScoresGrid() {
+  var grid = document.getElementById('scoresGrid');
+  for (var i = 1; i <= 9; i++) {
+    var div = document.createElement('div');
+    div.className = 'score-input';
+    div.innerHTML = '<label>' + i + '</label><input type="number" min="0" max="30" id="score_' + i + '" placeholder="0">';
+    grid.appendChild(div);
+  }
+}
+
+function toggleScores() {
+  scoresVisible = !scoresVisible;
+  document.getElementById('scoresGrid').style.display = scoresVisible ? 'grid' : 'none';
+}
+
+/* ========================================================
+   ADD / REMOVE PARTICIPANTS
+   ======================================================== */
+function addParticipant() {
+  var name = document.getElementById('pName').value.trim();
+  if (!name) { alert('Please enter a name.'); return; }
+
+  var typeVal = document.getElementById('pType').value;
+  var wingVal = document.getElementById('pWing').value;
+  var scores = null;
+
+  if (scoresVisible) {
+    scores = {};
+    var hasAny = false;
+    for (var i = 1; i <= 9; i++) {
+      var v = parseInt(document.getElementById('score_' + i).value) || 0;
+      scores[i] = v;
+      if (v > 0) hasAny = true;
+    }
+    if (!hasAny) scores = null;
+  }
+
+  var type = typeVal ? parseInt(typeVal) : null;
+  var wing = wingVal ? parseInt(wingVal) : null;
+
+  if (scores && !type) {
+    type = detectType(scores);
+    wing = detectWing(type, scores);
+  }
+
+  if (!type) { alert('Please select a type or enter RHETI scores.'); return; }
+
+  if (!wing) {
+    wing = detectWing(type, scores);
+  }
+
+  participants.push({ id: nextId++, name: name, type: type, wing: wing, scores: scores });
+  saveToStorage();
+
+  document.getElementById('pName').value = '';
+  document.getElementById('pType').value = '';
+  updateWingSelect();
+  for (var j = 1; j <= 9; j++) {
+    var el = document.getElementById('score_' + j);
+    if (el) el.value = '';
+  }
+
+  render();
+}
+
+function detectType(scores) {
+  var max = 0, maxType = 1;
+  for (var i = 1; i <= 9; i++) {
+    if ((scores[i] || 0) > max) { max = scores[i]; maxType = i; }
+  }
+  return maxType;
+}
+
+function detectWing(type, scores) {
+  if (!type) return null;
+  var wings = EXTENDED_TYPE_DATA[type].wings;
+  if (!wings || wings.length < 2) return null;
+  if (scores) {
+    return (scores[wings[0]] || 0) >= (scores[wings[1]] || 0) ? wings[0] : wings[1];
+  }
+  return wings[0];
+}
+
+function removeParticipant(id) {
+  participants = participants.filter(function(p) { return p.id !== id; });
+  saveToStorage();
+  render();
+}
+
+/* ========================================================
+   RENDER ALL DASHBOARD ELEMENTS
+   ======================================================== */
+function render() {
+  renderParticipantList();
+  renderTeamStats();
+  renderCenters();
+  drawEnneagram();
+  renderTypeCards();
+  renderDynamics();
+}
+
+function renderParticipantList() {
+  var container = document.getElementById('participantList');
+  if (participants.length === 0) {
+    container.innerHTML = '<div style="color:var(--text-dim);font-size:13px;">No participants yet.</div>';
+    return;
+  }
+  container.innerHTML = participants.map(function(p) {
+    var td = EXTENDED_TYPE_DATA[p.type];
+    var wingStr = p.wing ? 'w' + p.wing : '';
+    return '<div class="participant-item"><div class="p-info"><span class="type-dot" style="background:' + td.color + '"></span><span>' + esc(p.name) + '</span><span style="color:var(--text-dim);font-size:12px;">' + p.type + wingStr + '</span></div><button class="remove-btn" onclick="removeParticipant(' + p.id + ')" title="Remove">&times;</button></div>';
+  }).join('');
+}
+
+function renderTeamStats() {
+  var container = document.getElementById('teamStats');
+  var count = participants.length;
+  var typesPresent = new Set(participants.map(function(p) { return p.type; }));
+  var typeCounts = {};
+  participants.forEach(function(p) { typeCounts[p.type] = (typeCounts[p.type] || 0) + 1; });
+
+  var mostCommon = '-';
+  var maxCount = 0;
+  for (var t in typeCounts) {
+    if (typeCounts[t] > maxCount) { maxCount = typeCounts[t]; mostCommon = 'Type ' + t + ' (' + typeCounts[t] + ')'; }
+  }
+
+  var missing = [];
+  for (var i = 1; i <= 9; i++) { if (!typesPresent.has(i)) missing.push(i); }
+
+  container.innerHTML =
+    '<div class="stat-card"><h4>Team Overview</h4>' +
+    '<div class="stat-row"><span>People</span><span class="stat-val">' + count + '</span></div>' +
+    '<div class="stat-row"><span>Types Represented</span><span class="stat-val">' + typesPresent.size + '/9</span></div>' +
+    '<div class="stat-row"><span>Most Common</span><span class="stat-val">' + mostCommon + '</span></div>' +
+    '<div class="stat-row"><span>Missing Types</span><span class="stat-val">' + (missing.length ? missing.join(', ') : 'None') + '</span></div>' +
+    '</div>';
+}
+
+function renderCenters() {
+  var container = document.getElementById('centersInfo');
+  var html = '';
+  var keys = ['thinking', 'feeling', 'instinctive'];
+  keys.forEach(function(key) {
+    var info = TRIAD_INFO[key];
+    var count = participants.filter(function(p) { return info.types.indexOf(p.type) !== -1; }).length;
+    html += '<div class="center-card"><div class="center-name">' + info.name + '</div><div class="center-info">Types: ' + info.types.join(', ') + ' | Members: ' + count + ' | Core Emotion: ' + info.emotion + '</div></div>';
+  });
+  container.innerHTML = html;
+}
+
+/* ========================================================
+   ENNEAGRAM CANVAS DRAWING
+   ======================================================== */
+function setView(view) {
+  currentView = view;
+  document.querySelectorAll('.view-toggle button').forEach(function(b) { b.classList.toggle('active', b.dataset.view === view); });
+  drawEnneagram();
+}
+
+function drawEnneagram() {
+  var canvas = document.getElementById('enneagramCanvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var w = canvas.width;
+  var h = canvas.height;
+  var cx = w / 2;
+  var cy = h / 2;
+  var radius = 420;
+
+  ctx.clearRect(0, 0, w, h);
+
+  var typeCounts = {};
+  participants.forEach(function(p) { typeCounts[p.type] = (typeCounts[p.type] || 0) + 1; });
+
+  function pos(typeNum) {
+    var angle = TYPE_ANGLES[typeNum] * Math.PI / 180;
+    return { x: cx + radius * Math.cos(angle), y: cy + radius * Math.sin(angle) };
+  }
+
+  // Outer circle
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.strokeStyle = '#3a3f55';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Inner perimeter lines
+  var order = [9,1,2,3,4,5,6,7,8,9];
+  ctx.beginPath();
+  order.forEach(function(t, i) {
+    var p = pos(t);
+    if (i === 0) ctx.moveTo(p.x, p.y);
+    else ctx.lineTo(p.x, p.y);
+  });
+  ctx.strokeStyle = '#2e3347';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Growth / stress lines
+  function drawLines(lines, color, dash) {
+    lines.forEach(function(pair) {
+      var pa = pos(pair[0]);
+      var pb = pos(pair[1]);
+      ctx.beginPath();
+      ctx.moveTo(pa.x, pa.y);
+      ctx.lineTo(pb.x, pb.y);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash(dash);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    });
+  }
+
+  if (currentView === 'growth' || currentView === 'all') {
+    drawLines(GROWTH_LINES, 'rgba(76, 175, 80, 0.6)', []);
+  }
+  if (currentView === 'stress' || currentView === 'all') {
+    drawLines(STRESS_LINES, 'rgba(229, 57, 53, 0.5)', [8, 4]);
+  }
+
+  // Nodes
+  for (var i = 1; i <= 9; i++) {
+    var p = pos(i);
+    var td = EXTENDED_TYPE_DATA[i];
+    var count = typeCounts[i] || 0;
+    var baseR = 32;
+    var r = baseR + count * 8;
+
+    if (count > 0) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r + 8, 0, Math.PI * 2);
+      ctx.fillStyle = td.color + '33';
+      ctx.fill();
+    }
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = count > 0 ? td.color : '#2e3347';
+    ctx.fill();
+    ctx.strokeStyle = td.color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = count > 0 ? '#fff' : td.color;
+    ctx.font = 'bold ' + (r > 36 ? 28 : 22) + 'px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(i), p.x, p.y - (count > 0 ? 6 : 0));
+
+    if (count > 0) {
+      ctx.font = '16px -apple-system, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      ctx.fillText(String(count), p.x, p.y + 14);
+    }
+
+    var labelAngle = TYPE_ANGLES[i] * Math.PI / 180;
+    var labelR = radius + 55;
+    var lx = cx + labelR * Math.cos(labelAngle);
+    var ly = cy + labelR * Math.sin(labelAngle);
+    ctx.font = '14px -apple-system, sans-serif';
+    ctx.fillStyle = '#8b8fa3';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(td.name, lx, ly);
+  }
+}
+
+/* ========================================================
+   TYPE CARDS (Right Panel)
+   ======================================================== */
+function renderTypeCards() {
+  var container = document.getElementById('typeCards');
+  var html = '';
+  for (var i = 1; i <= 9; i++) {
+    var td = EXTENDED_TYPE_DATA[i];
+    var count = participants.filter(function(p) { return p.type === i; }).length;
+    var isExpanded = expandedCard === i;
+    html += '<div class="type-card' + (isExpanded ? ' expanded' : '') + '" style="border-left-color:' + td.color + '" onclick="toggleTypeCard(' + i + ')">';
+    html += '<div class="type-card-header"><span class="type-num" style="background:' + td.color + '">' + i + '</span><span>' + td.name + '</span>';
+    if (count > 0) html += '<span style="margin-left:auto;font-size:12px;color:var(--text-dim)">' + count + ' member' + (count !== 1 ? 's' : '') + '</span>';
+    html += '</div>';
+    html += '<div class="type-card-body">';
+    html += '<div class="detail-section"><div class="detail-label">Basic Fear</div><div>' + esc(td.basicFear) + '</div></div>';
+    html += '<div class="detail-section"><div class="detail-label">Basic Desire</div><div>' + esc(td.basicDesire) + '</div></div>';
+    html += '<div class="detail-section"><div class="detail-label">Key Motivations</div><div>' + esc(td.keyMotivations) + '</div></div>';
+    html += '<div class="detail-section"><div class="detail-label">Growth Arrow</div><div>Moves toward Type ' + td.growth + ' (' + EXTENDED_TYPE_DATA[td.growth].name + ')</div></div>';
+    html += '<div class="detail-section"><div class="detail-label">Stress Arrow</div><div>Moves toward Type ' + td.stress + ' (' + EXTENDED_TYPE_DATA[td.stress].name + ')</div></div>';
+    html += '<div class="detail-section"><div class="detail-label">Wings</div><div>' + td.wings.map(function(w) { return w + ' (' + EXTENDED_TYPE_DATA[w].name + ')'; }).join(', ') + '</div></div>';
+    html += '<div class="detail-section"><div class="detail-label">Leadership</div><div>' + esc(td.leadership) + '</div></div>';
+    html += '<div class="detail-section"><div class="detail-label">Strengths</div><ul style="padding-left:16px;margin:4px 0">' + td.strengths.map(function(s) { return '<li style="margin-bottom:4px">' + esc(s) + '</li>'; }).join('') + '</ul></div>';
+    html += '<div class="detail-section"><div class="detail-label">Challenges</div><ul style="padding-left:16px;margin:4px 0">' + td.challenges.map(function(c) { return '<li style="margin-bottom:4px">' + esc(c) + '</li>'; }).join('') + '</ul></div>';
+    html += '</div></div>';
+  }
+  container.innerHTML = html;
+}
+
+function toggleTypeCard(num) {
+  expandedCard = expandedCard === num ? null : num;
+  renderTypeCards();
+}
+
+/* ========================================================
+   TEAM DYNAMICS
+   ======================================================== */
+function renderDynamics() {
+  var container = document.getElementById('dynamicsCards');
+  var typeSet = {};
+  participants.forEach(function(p) { typeSet[p.type] = true; });
+  var typesPresent = Object.keys(typeSet).map(Number).sort(function(a, b) { return a - b; });
+  var html = '';
+  for (var i = 0; i < typesPresent.length; i++) {
+    for (var j = i + 1; j < typesPresent.length; j++) {
+      var a = typesPresent[i];
+      var b = typesPresent[j];
+      var key = a + '-' + b;
+      var dyn = PAIR_DYNAMICS[key];
+      if (dyn) {
+        html += '<div class="dynamics-card ' + dyn.tag + '">';
+        html += '<div class="dyn-header">Type ' + a + ' &harr; Type ' + b + '<span class="dyn-tag ' + dyn.tag + '">' + dyn.tag + '</span></div>';
+        html += '<div class="dyn-body">' + esc(dyn.summary) + '</div>';
+        html += '</div>';
+      }
+    }
+  }
+  if (!html) {
+    html = '<div style="color:var(--text-dim);font-size:13px;">Add at least two different types to see dynamics.</div>';
+  }
+  container.innerHTML = html;
+}
+
+/* ========================================================
+   EXPORT / IMPORT
+   ======================================================== */
+function exportTeam() {
+  var data = JSON.stringify(participants, null, 2);
+  var blob = new Blob([data], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'enneagram_team.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importTeam(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = JSON.parse(e.target.result);
+      if (Array.isArray(data)) {
+        participants = data;
+        nextId = participants.length > 0 ? Math.max.apply(null, participants.map(function(p) { return p.id; })) + 1 : 1;
+        saveToStorage();
+        render();
+      } else {
+        alert('Invalid file format: expected a JSON array.');
+      }
+    } catch(err) {
+      alert('Failed to parse JSON: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+/* ========================================================
+   TAB 2: TYPE GUIDE
+   ======================================================== */
+function buildGuide() {
+  var nav = document.getElementById('guideNav');
+  var navHtml = '';
+  for (var i = 1; i <= 9; i++) {
+    var td = EXTENDED_TYPE_DATA[i];
+    navHtml += '<a href="#guide-type-' + i + '"><span class="nav-dot" style="background:' + td.color + '"></span>Type ' + i + '</a>';
+  }
+  nav.innerHTML = navHtml;
+
+  var container = document.getElementById('guideContent');
+  var html = '';
+  for (var i = 1; i <= 9; i++) {
+    var td = EXTENDED_TYPE_DATA[i];
+    html += '<div class="guide-type" id="guide-type-' + i + '">';
+
+    // Header
+    html += '<div class="guide-type-header"><div class="guide-type-num" style="background:' + td.color + '">' + i + '</div><div><h2>' + esc(td.name) + '</h2><div class="subtitle">' + esc(td.subtitle) + '</div></div></div>';
+
+    // Overview
+    html += '<div class="guide-section"><h3>Overview</h3><div class="guide-box"><p>' + esc(td.longDesc) + '</p></div></div>';
+
+    // The Passion
+    html += '<div class="guide-section"><h3>The Passion: ' + esc(td.passion) + '</h3><div class="guide-callout passion"><p>' + esc(td.passionDesc) + '</p></div></div>';
+
+    // Hidden Side
+    html += '<div class="guide-section"><h3>Hidden Side</h3><div class="guide-callout hidden"><p>' + esc(td.hiddenSide) + '</p></div></div>';
+
+    // Basic Fear & Desire
+    html += '<div class="guide-section"><h3>Basic Fear &amp; Desire</h3><div class="guide-pair"><div class="guide-pair-card fear"><h4>Basic Fear</h4><p>' + esc(td.basicFear) + '</p></div><div class="guide-pair-card desire"><h4>Basic Desire</h4><p>' + esc(td.basicDesire) + '</p></div></div></div>';
+
+    // Key Motivations
+    html += '<div class="guide-section"><h3>Key Motivations</h3><div class="guide-box"><p>' + esc(td.keyMotivations) + '</p></div></div>';
+
+    // Strengths & Growth Areas
+    html += '<div class="guide-section"><h3>Strengths &amp; Growth Areas</h3><div class="guide-pair"><div><h4 style="font-size:13px;margin-bottom:8px;color:#4caf50">Strengths</h4><div class="tag-list">' + td.strengths.map(function(s) { return '<span class="tag-pill">' + esc(s) + '</span>'; }).join('') + '</div></div><div><h4 style="font-size:13px;margin-bottom:8px;color:#ff9800">Growth Areas</h4><div class="tag-list">' + td.challenges.map(function(c) { return '<span class="tag-pill">' + esc(c) + '</span>'; }).join('') + '</div></div></div></div>';
+
+    // Wings
+    html += '<div class="guide-section"><h3>Wings</h3><div class="guide-pair">';
+    td.wings.forEach(function(w) {
+      var wColor = EXTENDED_TYPE_DATA[w].color;
+      html += '<div class="guide-wing" style="border-left-color:' + wColor + '"><h4>Wing ' + w + ': ' + EXTENDED_TYPE_DATA[w].name + '</h4><p style="font-size:13px;color:var(--text-dim);margin-top:6px">' + esc(td.wingDescriptions[w]) + '</p></div>';
+    });
+    html += '</div></div>';
+
+    // Phobic/Counterphobic (Type 6 only)
+    if (i === 6 && td.phobicCounterphobic) {
+      html += '<div class="guide-section"><h3>Phobic vs Counterphobic</h3><div class="phobic-callout"><p>' + esc(td.phobicCounterphobic) + '</p></div></div>';
+    }
+
+    // Growth, Stress & Security
+    html += '<div class="guide-section"><h3>Growth, Stress &amp; Security</h3><div class="guide-arrows">';
+    html += '<div class="guide-arrow-card growth-card"><h4>Growth (toward Type ' + td.growth + ')</h4><p style="font-size:13px;color:var(--text-dim)">' + esc(td.growthDesc) + '</p></div>';
+    html += '<div class="guide-arrow-card stress-card"><h4>Stress (toward Type ' + td.stress + ')</h4><p style="font-size:13px;color:var(--text-dim)">' + esc(td.stressDesc) + '</p></div>';
+    html += '<div class="guide-arrow-card security-card"><h4>Security</h4><p style="font-size:13px;color:var(--text-dim)">' + esc(td.securityDesc) + '</p></div>';
+    html += '</div></div>';
+
+    // Levels of Development
+    html += '<div class="guide-section"><h3>Levels of Development</h3><ul class="levels-list">';
+    for (var lvl = 1; lvl <= 9; lvl++) {
+      var cat = lvl <= 3 ? 'healthy' : (lvl <= 6 ? 'average' : 'unhealthy');
+      var catLabel = lvl <= 3 ? 'Healthy' : (lvl <= 6 ? 'Average' : 'Unhealthy');
+      html += '<li class="' + cat + '"><span class="level-badge ' + cat + '">' + catLabel + '</span>' + esc(td.levels[lvl]) + '</li>';
+    }
+    html += '</ul></div>';
+
+    // Relationship Patterns
+    html += '<div class="guide-section"><h3>Relationship Patterns</h3><ul class="rel-list">';
+    td.relationshipIssues.forEach(function(ri) { html += '<li>' + esc(ri) + '</li>'; });
+    html += '</ul></div>';
+
+    // Personal Growth Recommendations
+    html += '<div class="guide-section"><h3>Personal Growth Recommendations</h3><ol class="growth-rec-list">';
+    td.growthRecs.forEach(function(gr) { html += '<li>' + esc(gr) + '</li>'; });
+    html += '</ol></div>';
+
+    // Leadership Style
+    html += '<div class="guide-section"><h3>Leadership Style</h3><div class="leadership-box">' + esc(td.leadership) + '</div></div>';
+
+    html += '</div>';
+  }
+  container.innerHTML = html;
+}
+
+/* ========================================================
+   TAB 3: SCORE PROFILES
+   ======================================================== */
+function renderProfiles() {
+  var withScores = participants.filter(function(p) { return p.scores; });
+  var grid = document.getElementById('radarGrid');
+  var composite = document.getElementById('compositeSection');
+  var tableContainer = document.getElementById('scoreTableContainer');
+
+  if (withScores.length === 0) {
+    grid.innerHTML = '<div class="no-scores-msg">No participants with RHETI scores. Add scores when creating participants.</div>';
+    composite.innerHTML = '';
+    tableContainer.innerHTML = '';
+    return;
+  }
+
+  // Individual radar cards
+  grid.innerHTML = '';
+  withScores.forEach(function(p) {
+    var card = document.createElement('div');
+    card.className = 'radar-card';
+    var td = EXTENDED_TYPE_DATA[p.type];
+    var wingStr = p.wing ? 'w' + p.wing : '';
+    card.innerHTML = '<h4>' + esc(p.name) + '</h4><div class="radar-type">Type ' + p.type + wingStr + ' - ' + td.name + '</div><canvas width="600" height="600" style="width:300px;height:300px;margin-top:8px;" id="radar_' + p.id + '"></canvas>';
+    grid.appendChild(card);
+    setTimeout(function() { drawRadarChart(document.getElementById('radar_' + p.id), p.scores, td.color); }, 0);
+  });
+
+  // Composite chart
+  composite.innerHTML = '<h3 style="margin-bottom:12px;">Team Composite</h3><canvas width="800" height="800" style="width:400px;height:400px;" id="compositeRadar"></canvas>';
+  setTimeout(function() { drawCompositeRadar(document.getElementById('compositeRadar'), withScores); }, 0);
+
+  // Score comparison table
+  var tableHtml = '<table class="score-table"><thead><tr><th>Participant</th>';
+  for (var i = 1; i <= 9; i++) tableHtml += '<th>T' + i + '</th>';
+  tableHtml += '<th>Type</th></tr></thead><tbody>';
+  withScores.forEach(function(p) {
+    var td = EXTENDED_TYPE_DATA[p.type];
+    var maxVal = Math.max.apply(null, Object.values(p.scores));
+    tableHtml += '<tr><td style="text-align:left">' + esc(p.name) + '</td>';
+    for (var j = 1; j <= 9; j++) {
+      var val = p.scores[j] || 0;
+      var isMax = val > 0 && val === maxVal;
+      tableHtml += '<td' + (isMax ? ' style="font-weight:700;color:' + td.color + '"' : '') + '>' + val + '</td>';
+    }
+    tableHtml += '<td style="color:' + td.color + ';font-weight:600">' + p.type + (p.wing ? 'w' + p.wing : '') + '</td></tr>';
+  });
+  tableHtml += '</tbody></table>';
+  tableContainer.innerHTML = tableHtml;
+}
+
+function drawRadarChart(canvas, scores, color) {
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var w = canvas.width;
+  var h = canvas.height;
+  var cx = w / 2;
+  var cy = h / 2;
+  var maxR = Math.min(w, h) / 2 - 60;
+  var maxScore = 30;
+  var typeOrder = [9,1,2,3,4,5,6,7,8];
+
+  ctx.clearRect(0, 0, w, h);
+
+  function angleFor(typeNum) {
+    return TYPE_ANGLES[typeNum] * Math.PI / 180;
+  }
+
+  // Grid lines
+  [10, 20, 30].forEach(function(val) {
+    var r = (val / maxScore) * maxR;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = '#2e3347';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.font = '12px sans-serif';
+    ctx.fillStyle = '#555';
+    ctx.textAlign = 'center';
+    ctx.fillText(String(val), cx, cy - r + 12);
+  });
+
+  // Axis lines and labels
+  typeOrder.forEach(function(t) {
+    var a = angleFor(t);
+    var ex = cx + maxR * Math.cos(a);
+    var ey = cy + maxR * Math.sin(a);
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(ex, ey);
+    ctx.strokeStyle = '#2e3347';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    var lR = maxR + 30;
+    var lx = cx + lR * Math.cos(a);
+    var ly = cy + lR * Math.sin(a);
+    ctx.font = '13px -apple-system, sans-serif';
+    ctx.fillStyle = '#8b8fa3';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    var nameParts = EXTENDED_TYPE_DATA[t].name.split(' ');
+    ctx.fillText(t + ' ' + (nameParts[1] || nameParts[0]), lx, ly);
+  });
+
+  // Data polygon
+  ctx.beginPath();
+  typeOrder.forEach(function(t, idx) {
+    var val = scores[t] || 0;
+    var r = (val / maxScore) * maxR;
+    var a = angleFor(t);
+    var x = cx + r * Math.cos(a);
+    var y = cy + r * Math.sin(a);
+    if (idx === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.closePath();
+  ctx.fillStyle = color + '33';
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // Data points
+  typeOrder.forEach(function(t) {
+    var val = scores[t] || 0;
+    var r = (val / maxScore) * maxR;
+    var a = angleFor(t);
+    var x = cx + r * Math.cos(a);
+    var y = cy + r * Math.sin(a);
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+  });
+}
+
+function drawCompositeRadar(canvas, withScores) {
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var w = canvas.width;
+  var h = canvas.height;
+  var cx = w / 2;
+  var cy = h / 2;
+  var maxR = Math.min(w, h) / 2 - 80;
+  var maxScore = 30;
+  var typeOrder = [9,1,2,3,4,5,6,7,8];
+
+  ctx.clearRect(0, 0, w, h);
+
+  function angleFor(typeNum) {
+    return TYPE_ANGLES[typeNum] * Math.PI / 180;
+  }
+
+  // Grid
+  [10, 20, 30].forEach(function(val) {
+    var r = (val / maxScore) * maxR;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = '#2e3347';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.font = '13px sans-serif';
+    ctx.fillStyle = '#555';
+    ctx.textAlign = 'center';
+    ctx.fillText(String(val), cx, cy - r + 14);
+  });
+
+  // Axes and labels
+  typeOrder.forEach(function(t) {
+    var a = angleFor(t);
+    var ex = cx + maxR * Math.cos(a);
+    var ey = cy + maxR * Math.sin(a);
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(ex, ey);
+    ctx.strokeStyle = '#2e3347';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    var lR = maxR + 40;
+    var lx = cx + lR * Math.cos(a);
+    var ly = cy + lR * Math.sin(a);
+    ctx.font = '14px -apple-system, sans-serif';
+    ctx.fillStyle = '#8b8fa3';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    var nameParts = EXTENDED_TYPE_DATA[t].name.split(' ');
+    ctx.fillText(t + ' ' + (nameParts[1] || nameParts[0]), lx, ly);
+  });
+
+  // Overlay each participant
+  withScores.forEach(function(p) {
+    var color = EXTENDED_TYPE_DATA[p.type].color;
+    ctx.beginPath();
+    typeOrder.forEach(function(t, idx) {
+      var val = p.scores[t] || 0;
+      var r = (val / maxScore) * maxR;
+      var a = angleFor(t);
+      var x = cx + r * Math.cos(a);
+      var y = cy + r * Math.sin(a);
+      if (idx === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.closePath();
+    ctx.fillStyle = color + '22';
+    ctx.fill();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+
+  // Legend
+  var legendY = 20;
+  withScores.forEach(function(p) {
+    var color = EXTENDED_TYPE_DATA[p.type].color;
+    ctx.fillStyle = color;
+    ctx.fillRect(12, legendY, 12, 12);
+    ctx.font = '13px -apple-system, sans-serif';
+    ctx.fillStyle = '#8b8fa3';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(p.name, 30, legendY + 6);
+    legendY += 20;
+  });
+}
+
+/* ========================================================
+   FACILITATOR MODAL
+   ======================================================== */
+function buildFacScoresGrid() {
+  var grid = document.getElementById('facScoresGrid');
+  for (var i = 1; i <= 9; i++) {
+    var div = document.createElement('div');
+    div.className = 'score-input';
+    div.innerHTML = '<label>' + i + '</label><input type="number" min="0" max="30" id="fac_score_' + i + '" placeholder="0">';
+    grid.appendChild(div);
+  }
+}
+
+function openFacilitatorModal() {
+  document.getElementById('facilitatorModal').classList.add('open');
+  var fac = loadFacilitatorData();
+  if (fac) {
+    document.getElementById('facName').value = fac.name || '';
+    if (fac.scores) {
+      for (var i = 1; i <= 9; i++) {
+        var el = document.getElementById('fac_score_' + i);
+        if (el) el.value = fac.scores[i] || '';
+      }
+    }
+    showFacResult(fac);
+  }
+}
+
+function closeFacilitatorModal() {
+  document.getElementById('facilitatorModal').classList.remove('open');
+}
+
+function loadFacilitatorData() {
+  try {
+    var saved = localStorage.getItem('enneagram_facilitator');
+    return saved ? JSON.parse(saved) : null;
+  } catch(e) { return null; }
+}
+
+function saveFacilitator() {
+  var name = document.getElementById('facName').value.trim();
+  if (!name) { alert('Please enter your name.'); return; }
+  var scores = {};
+  var hasAny = false;
+  for (var i = 1; i <= 9; i++) {
+    var v = parseInt(document.getElementById('fac_score_' + i).value) || 0;
+    scores[i] = v;
+    if (v > 0) hasAny = true;
+  }
+  if (!hasAny) { alert('Please enter at least one score.'); return; }
+
+  var type = detectType(scores);
+  var wing = detectWing(type, scores);
+
+  var fac = { name: name, scores: scores, type: type, wing: wing };
+  localStorage.setItem('enneagram_facilitator', JSON.stringify(fac));
+  showFacResult(fac);
+}
+
+function showFacResult(fac) {
+  if (!fac || !fac.scores || !fac.type) {
+    document.getElementById('facResult').style.display = 'none';
+    return;
+  }
+  document.getElementById('facResult').style.display = 'block';
+  var td = EXTENDED_TYPE_DATA[fac.type];
+  var wingStr = fac.wing ? 'w' + fac.wing : '';
+  document.getElementById('facTypeDisplay').innerHTML = '<span style="color:' + td.color + '">Type ' + fac.type + wingStr + ': ' + td.name + '</span>';
+  setTimeout(function() {
+    drawRadarChart(document.getElementById('facRadarCanvas'), fac.scores, td.color);
+  }, 0);
+}
+
+function loadFacilitator() {
+  var fac = loadFacilitatorData();
+  if (fac) showFacResult(fac);
+}
+
+function shareFacProfile() {
+  var fac = loadFacilitatorData();
+  if (!fac || !fac.type) return;
+  closeFacilitatorModal();
+  switchTab('guide');
+  setTimeout(function() {
+    var el = document.getElementById('guide-type-' + fac.type);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+}
+
+/* ========================================================
+   UTILITIES
+   ======================================================== */
+function esc(str) {
+  if (!str) return '';
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+/* ========================================================
+   PDF UPLOAD & PARSING
+   ======================================================== */
+function handlePdfUpload(file) {
+  if (!file || file.type !== 'application/pdf') {
+    showPdfStatus('Please upload a PDF file.', 'error');
+    return;
+  }
+  if (typeof pdfjsLib === 'undefined') {
+    showPdfStatus('PDF library not loaded. Please enter scores manually.', 'error');
+    return;
+  }
+  showPdfStatus('Reading PDF...', '');
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var typedArray = new Uint8Array(e.target.result);
+    pdfjsLib.getDocument(typedArray).promise.then(function(pdf) {
+      // Extract text from first 2 pages (score table is on page 1)
+      var textPromises = [];
+      var pagesToRead = Math.min(pdf.numPages, 3);
+      for (var i = 1; i <= pagesToRead; i++) {
+        textPromises.push(pdf.getPage(i).then(function(page) {
+          return page.getTextContent().then(function(tc) {
+            return tc.items.map(function(item) { return item.str; }).join(' ');
+          });
+        }));
+      }
+      Promise.all(textPromises).then(function(pages) {
+        var fullText = pages.join(' ');
+        parsePdfScores(fullText);
+      });
+    }).catch(function(err) {
+      showPdfStatus('Could not read PDF: ' + err.message, 'error');
+    });
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parsePdfScores(text) {
+  // Try to extract name from "Test Taker: Name"
+  var nameMatch = text.match(/Test\s*Taker[:\s]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/);
+  if (nameMatch) {
+    document.getElementById('pName').value = nameMatch[1].trim();
+  }
+
+  // Parse scores - RHETI format: "Type N, The TypeName  Score"
+  // The scores appear as: "Type 6, The Loyalist 26" etc.
+  var scores = {};
+  var scorePatterns = [
+    // Pattern 1: "Type N, The Name  Score" (standard RHETI format)
+    /Type\s*(\d)\s*,\s*The\s+\w+\s+(\d+)/gi,
+    // Pattern 2: numbers near type names
+    /Type\s*(\d)[^0-9]*?(\d{1,2})/gi
+  ];
+
+  for (var p = 0; p < scorePatterns.length; p++) {
+    var regex = scorePatterns[p];
+    var match;
+    while ((match = regex.exec(text)) !== null) {
+      var typeNum = parseInt(match[1]);
+      var score = parseInt(match[2]);
+      if (typeNum >= 1 && typeNum <= 9 && score >= 0 && score <= 30) {
+        if (!scores[typeNum]) scores[typeNum] = score;
+      }
+    }
+    if (Object.keys(scores).length >= 9) break;
+  }
+
+  if (Object.keys(scores).length < 9) {
+    // Fallback: look for the table format with just numbers near type references
+    var typeNames = { 'Reformer': 1, 'Helper': 2, 'Achiever': 3, 'Individualist': 4, 'Investigator': 5, 'Loyalist': 6, 'Enthusiast': 7, 'Challenger': 8, 'Peacemaker': 9 };
+    for (var name in typeNames) {
+      if (!scores[typeNames[name]]) {
+        var re = new RegExp(name + '\\s+(\\d{1,2})', 'i');
+        var m = text.match(re);
+        if (m) {
+          var s = parseInt(m[1]);
+          if (s >= 0 && s <= 30) scores[typeNames[name]] = s;
+        }
+      }
+    }
+  }
+
+  var count = Object.keys(scores).length;
+  if (count >= 7) {
+    // Show scores section and populate
+    var grid = document.getElementById('scoresGrid');
+    if (grid.style.display === 'none') toggleScores();
+
+    for (var t = 1; t <= 9; t++) {
+      var input = document.getElementById('score_' + t);
+      if (input && scores[t] !== undefined) {
+        input.value = scores[t];
+      }
+    }
+
+    // Auto-detect type and wing
+    var maxScore = 0, detectedType = 0;
+    for (var t2 = 1; t2 <= 9; t2++) {
+      if (scores[t2] && scores[t2] > maxScore) {
+        maxScore = scores[t2];
+        detectedType = t2;
+      }
+    }
+    if (detectedType) {
+      document.getElementById('pType').value = detectedType;
+      updateWingSelect();
+    }
+
+    showPdfStatus('Extracted ' + count + ' scores from PDF. Review and click "Add Participant".', 'success');
+    document.getElementById('pdfDropZone').classList.add('success');
+    setTimeout(function() { document.getElementById('pdfDropZone').classList.remove('success'); }, 3000);
+  } else {
+    showPdfStatus('Could only find ' + count + ' scores. Please enter scores manually.', 'error');
+    document.getElementById('pdfDropZone').classList.add('error');
+    setTimeout(function() { document.getElementById('pdfDropZone').classList.remove('error'); }, 3000);
+  }
+}
+
+function showPdfStatus(msg, type) {
+  var el = document.getElementById('pdfStatus');
+  el.style.display = 'block';
+  el.textContent = msg;
+  el.style.color = type === 'error' ? '#e57373' : type === 'success' ? '#81c784' : 'var(--accent)';
+}
+
+/* ========================================================
+   FACILITATOR PDF UPLOAD
+   ======================================================== */
+function handleFacPdfUpload(file) {
+  if (!file || file.type !== 'application/pdf') {
+    showFacPdfStatus('Please upload a PDF file.', 'error');
+    return;
+  }
+  if (typeof pdfjsLib === 'undefined') {
+    showFacPdfStatus('PDF library not loaded. Please enter scores manually.', 'error');
+    return;
+  }
+  showFacPdfStatus('Reading PDF...', '');
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var typedArray = new Uint8Array(e.target.result);
+    pdfjsLib.getDocument(typedArray).promise.then(function(pdf) {
+      var textPromises = [];
+      var pagesToRead = Math.min(pdf.numPages, 3);
+      for (var i = 1; i <= pagesToRead; i++) {
+        textPromises.push(pdf.getPage(i).then(function(page) {
+          return page.getTextContent().then(function(tc) {
+            return tc.items.map(function(item) { return item.str; }).join(' ');
+          });
+        }));
+      }
+      Promise.all(textPromises).then(function(pages) {
+        var fullText = pages.join(' ');
+        parseFacPdfScores(fullText);
+      });
+    }).catch(function(err) {
+      showFacPdfStatus('Could not read PDF: ' + err.message, 'error');
+    });
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parseFacPdfScores(text) {
+  var nameMatch = text.match(/Test\s*Taker[:\s]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/);
+  if (nameMatch) {
+    document.getElementById('facName').value = nameMatch[1].trim();
+  }
+
+  var scores = {};
+  var scorePatterns = [
+    /Type\s*(\d)\s*,\s*The\s+\w+\s+(\d+)/gi,
+    /Type\s*(\d)[^0-9]*?(\d{1,2})/gi
+  ];
+  for (var p = 0; p < scorePatterns.length; p++) {
+    var regex = scorePatterns[p];
+    var match;
+    while ((match = regex.exec(text)) !== null) {
+      var typeNum = parseInt(match[1]);
+      var score = parseInt(match[2]);
+      if (typeNum >= 1 && typeNum <= 9 && score >= 0 && score <= 30) {
+        if (!scores[typeNum]) scores[typeNum] = score;
+      }
+    }
+    if (Object.keys(scores).length >= 9) break;
+  }
+
+  if (Object.keys(scores).length < 9) {
+    var typeNames = { 'Reformer': 1, 'Helper': 2, 'Achiever': 3, 'Individualist': 4, 'Investigator': 5, 'Loyalist': 6, 'Enthusiast': 7, 'Challenger': 8, 'Peacemaker': 9 };
+    for (var name in typeNames) {
+      if (!scores[typeNames[name]]) {
+        var re = new RegExp(name + '\\s+(\\d{1,2})', 'i');
+        var m = text.match(re);
+        if (m) {
+          var s = parseInt(m[1]);
+          if (s >= 0 && s <= 30) scores[typeNames[name]] = s;
+        }
+      }
+    }
+  }
+
+  var count = Object.keys(scores).length;
+  if (count >= 7) {
+    for (var t = 1; t <= 9; t++) {
+      var input = document.getElementById('fac_score_' + t);
+      if (input && scores[t] !== undefined) {
+        input.value = scores[t];
+      }
+    }
+    showFacPdfStatus('Extracted ' + count + ' scores from PDF. Review and click "Save Profile".', 'success');
+  } else {
+    showFacPdfStatus('Could only find ' + count + ' scores. Please enter scores manually.', 'error');
+  }
+}
+
+function showFacPdfStatus(msg, type) {
+  var el = document.getElementById('facPdfStatus');
+  el.style.display = 'block';
+  el.textContent = msg;
+  el.style.color = type === 'error' ? '#e57373' : type === 'success' ? '#81c784' : 'var(--accent)';
+}
+
+/* ========================================================
+   WING SELECT UPDATER (for PDF auto-detect)
+   ======================================================== */
+function updateWingSelect() {
+  var typeVal = parseInt(document.getElementById('pType').value);
+  var wingSel = document.getElementById('pWing');
+  wingSel.innerHTML = '<option value="">-- Auto-detect --</option>';
+  if (typeVal && EXTENDED_TYPE_DATA[typeVal]) {
+    EXTENDED_TYPE_DATA[typeVal].wings.forEach(function(w) {
+      wingSel.innerHTML += '<option value="' + w + '">w' + w + ' (' + EXTENDED_TYPE_DATA[w].name + ')</option>';
+    });
+  }
+}
+
+/* ========================================================
+   START
+   ======================================================== */
+init();
+</script>
+</body>
+</html>
