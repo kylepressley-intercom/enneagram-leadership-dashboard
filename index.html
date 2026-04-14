@@ -1089,6 +1089,7 @@ canvas#enneagramCanvas {
 <header class="app-header">
   <h1>Enneagram Team Dashboard</h1>
   <div class="header-actions">
+    <button class="secondary" onclick="seedTestData()">Seed Test Data</button>
     <button class="secondary" onclick="exportReport()">Export Report</button>
     <button class="secondary" onclick="startPresentation()">Present</button>
     <button class="secondary" onclick="openFacilitatorModal()">My Profile</button>
@@ -2304,6 +2305,80 @@ function saveToStorage() {
   try {
     localStorage.setItem(STORAGE_PREFIX + 'participants', JSON.stringify(participants));
   } catch(e) { console.error('Failed to save participants', e); }
+}
+
+function seedTestData() {
+  if (participants.length > 0 && !confirm('This will replace all existing participants with 25 random test people. Continue?')) return;
+
+  var firstNames = ['Alex','Jordan','Taylor','Morgan','Casey','Riley','Avery','Quinn','Cameron','Drew',
+    'Skyler','Jamie','Rowan','Sage','Reese','Dakota','Finley','Harper','Emerson','Logan',
+    'Peyton','Hayden','Blake','Kendall','Elliot'];
+  var lastNames = ['Chen','Patel','O\'Brien','Nakamura','Santos','Kim','Johansson','Okafor','Fitzgerald','Alvarez',
+    'Nguyen','Russo','Lindqvist','Adeyemi','Kowalski','Tanaka','Murphy','Bergström','Osei','Martinez',
+    'Park','Andersen','Mbeki','Dubois','Ivanovic'];
+
+  // Shuffle helper
+  function shuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+    }
+    return arr;
+  }
+
+  shuffle(firstNames);
+  shuffle(lastNames);
+
+  // Wing options per type: type → [wing1, wing2]
+  var wingMap = {1:[9,2], 2:[1,3], 3:[2,4], 4:[3,5], 5:[4,6], 6:[5,7], 7:[6,8], 8:[7,9], 9:[8,1]};
+
+  participants = [];
+  for (var i = 0; i < 25; i++) {
+    var type = Math.floor(Math.random() * 9) + 1;
+    var wings = wingMap[type];
+    var wing = wings[Math.floor(Math.random() * 2)];
+
+    // Generate realistic RHETI scores: dominant type gets 20-28, others get 5-18
+    var scores = {};
+    var total = 0;
+    for (var t = 1; t <= 9; t++) {
+      if (t === type) {
+        scores[t] = Math.floor(Math.random() * 9) + 20; // 20-28
+      } else if (t === wing) {
+        scores[t] = Math.floor(Math.random() * 8) + 14; // 14-21
+      } else {
+        scores[t] = Math.floor(Math.random() * 14) + 5; // 5-18
+      }
+      total += scores[t];
+    }
+
+    participants.push({
+      id: i + 1,
+      name: firstNames[i] + ' ' + lastNames[i],
+      type: type,
+      wing: wing,
+      scores: scores,
+      managerId: null
+    });
+  }
+
+  // Build a random org hierarchy: first person is CEO, rest get random managers
+  participants[0].isTopLevel = true;
+  // Create 3-4 direct reports to CEO, then cascade
+  var directReports = Math.floor(Math.random() * 2) + 3; // 3-4
+  for (var d = 1; d <= directReports && d < 25; d++) {
+    participants[d].managerId = participants[0].id;
+  }
+  // Remaining people report to someone already placed
+  for (var r = directReports + 1; r < 25; r++) {
+    var possibleManagers = participants.slice(0, r).filter(function(p) { return p.isTopLevel || p.managerId; });
+    var mgr = possibleManagers[Math.floor(Math.random() * possibleManagers.length)];
+    participants[r].managerId = mgr.id;
+  }
+
+  nextId = 26;
+  saveToStorage();
+  render();
 }
 
 /* ========================================================
