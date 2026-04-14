@@ -77,6 +77,22 @@
   margin-top: 10px;
   display: none;
 }
+#adminLockScreen {
+  position: fixed; inset: 0; z-index: 10000;
+  background: var(--bg);
+  display: none; align-items: center; justify-content: center;
+  flex-direction: column;
+}
+#adminLockScreen .lock-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 40px; text-align: center; max-width: 380px; width: 90%; }
+#adminLockScreen .lock-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.6; }
+#adminLockScreen h2 { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
+#adminLockScreen .lock-sub { color: var(--text-dim); font-size: 13px; margin-bottom: 24px; }
+#adminLockScreen input { width: 100%; padding: 10px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 15px; text-align: center; letter-spacing: 2px; margin-bottom: 12px; }
+#adminLockScreen input:focus { outline: none; border-color: var(--accent); }
+#adminLockScreen button { width: 100%; padding: 10px; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; }
+#adminLockScreen button:hover { opacity: 0.9; }
+#adminLockScreen .lock-error { color: #e57373; font-size: 13px; margin-top: 10px; display: none; }
+
 #appContent { display: none; }
 #appContent.unlocked { display: block; }
 
@@ -908,6 +924,18 @@ canvas#enneagramCanvas {
   </div>
 </div>
 
+<!-- ===== Admin Lock Screen ===== -->
+<div id="adminLockScreen" style="display:none;">
+  <div class="lock-box">
+    <div class="lock-icon">&#128272;</div>
+    <h2>Admin Access</h2>
+    <p class="lock-sub">Enter the admin passcode to manage teams</p>
+    <input type="password" id="adminPasscodeInput" placeholder="Admin passcode" autocomplete="off" onkeydown="if(event.key==='Enter')verifyAdminPasscode()">
+    <button onclick="verifyAdminPasscode()">Unlock</button>
+    <div class="lock-error" id="adminLockError">Incorrect passcode. Please try again.</div>
+  </div>
+</div>
+
 <!-- ===== Admin Panel (shown when no team hash in URL) ===== -->
 <div id="adminPanel">
   <div class="admin-box">
@@ -1106,7 +1134,8 @@ var STORAGE_PREFIX = TEAM_CONFIG.isTeamMode ? 'enneagram_' + TEAM_CONFIG.teamSlu
   } else {
     document.getElementById('lockScreen').style.display = 'none';
     document.getElementById('appContent').style.display = 'none';
-    document.getElementById('adminPanel').style.display = 'flex';
+    document.getElementById('adminPanel').style.display = 'none';
+    document.getElementById('adminLockScreen').style.display = 'flex';
     document.title = 'Enneagram Team Dashboard - Admin';
   }
 })();
@@ -1135,6 +1164,36 @@ function verifyPasscode() {
 if (TEAM_CONFIG.isTeamMode && sessionStorage.getItem(STORAGE_PREFIX + 'unlocked') === '1') {
   document.getElementById('lockScreen').style.display = 'none';
   document.getElementById('appContent').classList.add('unlocked');
+}
+
+/* ========================================================
+   ADMIN PASSCODE GATE
+   To change the admin passcode, replace ADMIN_HASH with:
+   echo -n "yournewpasscode" | shasum -a 256
+   ======================================================== */
+var ADMIN_HASH = 'bb897395db03a16c2103362ef9e5024464ba724ca6ac2c08befa7376beab3701';
+
+function verifyAdminPasscode() {
+  var input = document.getElementById('adminPasscodeInput').value;
+  if (!input) return;
+  crypto.subtle.digest('SHA-256', new TextEncoder().encode(input)).then(function(buf) {
+    var hash = Array.from(new Uint8Array(buf)).map(function(b) { return b.toString(16).padStart(2,'0'); }).join('');
+    if (hash === ADMIN_HASH) {
+      document.getElementById('adminLockScreen').style.display = 'none';
+      document.getElementById('adminPanel').style.display = 'flex';
+      sessionStorage.setItem('enneagram_admin_unlocked', '1');
+    } else {
+      document.getElementById('adminLockError').style.display = 'block';
+      document.getElementById('adminPasscodeInput').value = '';
+      document.getElementById('adminPasscodeInput').focus();
+    }
+  });
+}
+
+// Auto-unlock admin if already verified this session
+if (!TEAM_CONFIG.isTeamMode && sessionStorage.getItem('enneagram_admin_unlocked') === '1') {
+  document.getElementById('adminLockScreen').style.display = 'none';
+  document.getElementById('adminPanel').style.display = 'flex';
 }
 
 /* ========================================================
