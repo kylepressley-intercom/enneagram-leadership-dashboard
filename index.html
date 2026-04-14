@@ -15,6 +15,71 @@
   --text-dim: #8b8fa3;
   --accent: #6c63ff;
 }
+/* ===== Lock Screen ===== */
+#lockScreen {
+  position: fixed; inset: 0; z-index: 10000;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column;
+}
+#lockScreen .lock-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+  max-width: 380px;
+  width: 90%;
+}
+#lockScreen .lock-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.6;
+}
+#lockScreen h2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+#lockScreen .lock-sub {
+  color: var(--text-dim);
+  font-size: 13px;
+  margin-bottom: 24px;
+}
+#lockScreen input {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 15px;
+  text-align: center;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+#lockScreen input:focus { outline: none; border-color: var(--accent); }
+#lockScreen button {
+  width: 100%;
+  padding: 10px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+#lockScreen button:hover { opacity: 0.9; }
+#lockScreen .lock-error {
+  color: #e57373;
+  font-size: 13px;
+  margin-top: 10px;
+  display: none;
+}
+#appContent { display: none; }
+#appContent.unlocked { display: block; }
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -709,6 +774,21 @@ canvas#enneagramCanvas {
 </head>
 <body>
 
+<!-- ===== Lock Screen ===== -->
+<div id="lockScreen">
+  <div class="lock-box">
+    <div class="lock-icon">&#128274;</div>
+    <h2>Enneagram Dashboard</h2>
+    <p class="lock-sub">Enter the passcode to continue</p>
+    <input type="password" id="passcodeInput" placeholder="Passcode" autocomplete="off" onkeydown="if(event.key==='Enter')verifyPasscode()">
+    <button onclick="verifyPasscode()">Unlock</button>
+    <div class="lock-error" id="lockError">Incorrect passcode. Please try again.</div>
+  </div>
+</div>
+
+<!-- ===== App Content (hidden until unlocked) ===== -->
+<div id="appContent">
+
 <!-- ===== Header ===== -->
 <header class="app-header">
   <h1>Enneagram Team Dashboard</h1>
@@ -847,7 +927,40 @@ canvas#enneagramCanvas {
   </div>
 </div>
 
+</div><!-- end #appContent -->
+
 <script>
+/* ========================================================
+   PASSCODE GATE
+   To change the passcode, replace PASSCODE_HASH with the
+   SHA-256 hex digest of your new passcode. Generate one at:
+   terminal: echo -n "yourpasscode" | shasum -a 256
+   ======================================================== */
+var PASSCODE_HASH = '2230f5d9cfad420a32a00e0af5c5060182f90972c1dd18744166ae1f2d563546';
+
+function verifyPasscode() {
+  var input = document.getElementById('passcodeInput').value;
+  if (!input) return;
+  crypto.subtle.digest('SHA-256', new TextEncoder().encode(input)).then(function(buf) {
+    var hash = Array.from(new Uint8Array(buf)).map(function(b) { return b.toString(16).padStart(2,'0'); }).join('');
+    if (hash === PASSCODE_HASH) {
+      document.getElementById('lockScreen').style.display = 'none';
+      document.getElementById('appContent').classList.add('unlocked');
+      sessionStorage.setItem('enneagram_unlocked', '1');
+    } else {
+      document.getElementById('lockError').style.display = 'block';
+      document.getElementById('passcodeInput').value = '';
+      document.getElementById('passcodeInput').focus();
+    }
+  });
+}
+
+// Auto-unlock if already verified this session
+if (sessionStorage.getItem('enneagram_unlocked') === '1') {
+  document.getElementById('lockScreen').style.display = 'none';
+  document.getElementById('appContent').classList.add('unlocked');
+}
+
 /* ========================================================
    DATA: EXTENDED_TYPE_DATA
    ======================================================== */
