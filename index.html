@@ -907,30 +907,47 @@ canvas#enneagramCanvas {
 .orgchart-container { padding: 24px; max-width: 1200px; margin: 0 auto; }
 .orgchart-container h2 { font-size: 20px; margin-bottom: 4px; }
 .orgchart-sub { color: var(--text-dim); font-size: 13px; margin-bottom: 20px; }
+.org-layout { display: flex; gap: 24px; align-items: flex-start; }
+.org-tree-wrap { flex: 1; overflow-x: auto; }
 .org-tree { display: flex; flex-direction: column; align-items: center; }
-.org-level { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; position: relative; }
 .org-branch { display: flex; flex-direction: column; align-items: center; }
 .org-node {
   background: var(--surface2); border: 2px solid var(--border); border-radius: 8px;
-  padding: 10px 16px; text-align: center; min-width: 120px; cursor: default;
-  transition: border-color 0.2s;
+  padding: 10px 16px; text-align: center; min-width: 130px; cursor: grab;
+  transition: border-color 0.2s, opacity 0.2s, transform 0.2s;
+  user-select: none;
 }
 .org-node:hover { border-color: var(--accent); }
+.org-node.dragging { opacity: 0.4; transform: scale(0.95); }
+.org-node.drop-target { border-color: #81c784; background: rgba(129,199,132,0.1); box-shadow: 0 0 8px rgba(129,199,132,0.3); }
 .org-node .org-name { font-size: 13px; font-weight: 600; }
 .org-node .org-type { font-size: 11px; margin-top: 2px; }
 .org-connector { width: 2px; height: 20px; background: var(--border); margin: 0 auto; }
-.org-hline { display: flex; align-items: flex-start; }
-.org-hline::before {
-  content: ''; display: block; height: 2px; background: var(--border);
-  position: absolute; top: 0;
-}
 .org-children { display: flex; justify-content: center; gap: 16px; padding-top: 8px; position: relative; }
-.org-children::before {
-  content: ''; position: absolute; top: 0; left: 50%; width: 0; height: 0;
-}
 .org-child-branch { display: flex; flex-direction: column; align-items: center; }
 .org-child-branch .org-connector { height: 16px; }
 .org-empty { color: var(--text-dim); font-size: 13px; padding: 40px; text-align: center; }
+.org-drop-zone {
+  border: 2px dashed var(--border); border-radius: 8px; padding: 12px 20px;
+  text-align: center; color: var(--text-dim); font-size: 12px;
+  margin-bottom: 20px; transition: border-color 0.2s, background 0.2s;
+}
+.org-drop-zone.drop-target { border-color: var(--accent); background: rgba(108,99,255,0.1); color: var(--accent); }
+.org-pool {
+  min-width: 160px; max-width: 200px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px;
+}
+.org-pool h4 { font-size: 12px; color: var(--text-dim); text-transform: uppercase; margin-bottom: 8px; }
+.org-pool-item {
+  background: var(--surface2); border: 2px solid var(--border); border-radius: 6px;
+  padding: 6px 10px; margin-bottom: 6px; cursor: grab; font-size: 12px;
+  transition: border-color 0.2s, opacity 0.2s;
+  user-select: none;
+}
+.org-pool-item:hover { border-color: var(--accent); }
+.org-pool-item.dragging { opacity: 0.4; }
+.org-pool-item .pool-name { font-weight: 600; }
+.org-pool-item .pool-type { color: var(--text-dim); font-size: 11px; }
 
 /* ===== Presentation Mode ===== */
 .pres-overlay {
@@ -1194,8 +1211,17 @@ canvas#enneagramCanvas {
 <div class="tab-content" id="tab-orgchart">
   <div class="orgchart-container">
     <h2>Organization Chart</h2>
-    <p class="orgchart-sub">Set "Reports to" when adding participants to build the hierarchy.</p>
-    <div id="orgChartTree"></div>
+    <p class="orgchart-sub">Drag people onto each other to set reporting relationships. Drag to "Top Level" to remove a manager.</p>
+    <div class="org-drop-zone" id="orgTopLevelZone"
+      ondragover="event.preventDefault();this.classList.add('drop-target')"
+      ondragleave="this.classList.remove('drop-target')"
+      ondrop="event.preventDefault();this.classList.remove('drop-target');orgDropTopLevel(event)">
+      Drop here to make top level
+    </div>
+    <div class="org-layout">
+      <div class="org-tree-wrap" id="orgChartTree"></div>
+      <div class="org-pool" id="orgPool"></div>
+    </div>
   </div>
 </div>
 
@@ -3720,8 +3746,10 @@ function renderDiscussionPrompts() {
 }
 
 /* ========================================================
-   ORG CHART
+   ORG CHART (drag-and-drop)
    ======================================================== */
+var orgDragId = null;
+
 function populateManagerSelect() {
   var sel = document.getElementById('pManager');
   if (!sel) return;
@@ -3734,29 +3762,39 @@ function populateManagerSelect() {
 }
 
 function renderOrgChart() {
-  var container = document.getElementById('orgChartTree');
-  if (!container) return;
+  var treeContainer = document.getElementById('orgChartTree');
+  var poolContainer = document.getElementById('orgPool');
+  if (!treeContainer) return;
+
   if (participants.length === 0) {
-    container.innerHTML = '<div class="org-empty">Add participants and set "Reports to" relationships to build the org chart.</div>';
+    treeContainer.innerHTML = '<div class="org-empty">Add participants to build the org chart.</div>';
+    if (poolContainer) poolContainer.innerHTML = '';
     return;
   }
 
   // Build tree structure
   var childrenOf = {};
-  var hasManager = {};
   participants.forEach(function(p) {
     var mgr = p.managerId || 0;
     if (!childrenOf[mgr]) childrenOf[mgr] = [];
     childrenOf[mgr].push(p);
-    if (mgr) hasManager[p.id] = true;
   });
 
-  // Roots = participants with no manager
-  var roots = participants.filter(function(p) { return !p.managerId; });
+  // Determine who's in the tree (has manager or has reports)
+  var hasReports = {};
+  participants.forEach(function(p) {
+    if (p.managerId) hasReports[p.managerId] = true;
+  });
 
-  if (roots.length === 0) {
-    container.innerHTML = '<div class="org-empty">No top-level participants found. Make sure at least one person has "Reports to" set to "None".</div>';
-    return;
+  // Roots = participants with no manager who have reports, or all top-level if any have managers set
+  var anyHierarchy = participants.some(function(p) { return p.managerId; });
+  var roots = participants.filter(function(p) { return !p.managerId && (hasReports[p.id] || anyHierarchy); });
+  var poolPeople = anyHierarchy ? participants.filter(function(p) { return !p.managerId && !hasReports[p.id]; }) : participants;
+
+  // If no hierarchy exists yet, show everyone in the pool
+  if (!anyHierarchy) {
+    roots = [];
+    poolPeople = participants.slice();
   }
 
   function buildNode(person) {
@@ -3765,7 +3803,12 @@ function renderOrgChart() {
     var children = childrenOf[person.id] || [];
 
     var html = '<div class="org-branch">';
-    html += '<div class="org-node" style="border-color:' + (td.color || 'var(--border)') + '">';
+    html += '<div class="org-node" draggable="true" data-id="' + person.id + '" style="border-color:' + (td.color || 'var(--border)') + '"' +
+      ' ondragstart="orgDragStart(event,' + person.id + ')"' +
+      ' ondragend="orgDragEnd(event)"' +
+      ' ondragover="event.preventDefault();orgDragOver(event)"' +
+      ' ondragleave="orgDragLeave(event)"' +
+      ' ondrop="event.preventDefault();orgDrop(event,' + person.id + ')">';
     html += '<div class="org-name">' + esc(person.name) + '</div>';
     html += '<div class="org-type" style="color:' + (td.color || 'var(--text-dim)') + '">Type ' + person.type + wingStr + ' — ' + (td.name || '') + '</div>';
     html += '</div>';
@@ -3785,18 +3828,115 @@ function renderOrgChart() {
     return html;
   }
 
-  var html = '<div class="org-tree">';
-  if (roots.length === 1) {
-    html += buildNode(roots[0]);
-  } else {
-    html += '<div class="org-children">';
-    roots.forEach(function(r) {
-      html += '<div class="org-child-branch">' + buildNode(r) + '</div>';
-    });
+  // Render tree
+  if (roots.length > 0) {
+    var html = '<div class="org-tree">';
+    if (roots.length === 1) {
+      html += buildNode(roots[0]);
+    } else {
+      html += '<div class="org-children">';
+      roots.forEach(function(r) {
+        html += '<div class="org-child-branch">' + buildNode(r) + '</div>';
+      });
+      html += '</div>';
+    }
     html += '</div>';
+    treeContainer.innerHTML = html;
+  } else {
+    treeContainer.innerHTML = '<div class="org-empty" style="padding:20px;">Drag a person from the pool onto another to start building the chart, or drag someone to "Top Level" to make them the root.</div>';
   }
-  html += '</div>';
-  container.innerHTML = html;
+
+  // Render pool
+  if (poolContainer) {
+    if (poolPeople.length > 0) {
+      var poolHtml = '<h4>Unplaced (' + poolPeople.length + ')</h4>';
+      poolPeople.forEach(function(p) {
+        var td = EXTENDED_TYPE_DATA[p.type] || {};
+        poolHtml += '<div class="org-pool-item" draggable="true" data-id="' + p.id + '"' +
+          ' ondragstart="orgDragStart(event,' + p.id + ')"' +
+          ' ondragend="orgDragEnd(event)"' +
+          ' style="border-left:3px solid ' + (td.color || 'var(--border)') + '">' +
+          '<div class="pool-name">' + esc(p.name) + '</div>' +
+          '<div class="pool-type">Type ' + p.type + ' — ' + (td.name || '') + '</div></div>';
+      });
+      poolContainer.innerHTML = poolHtml;
+      poolContainer.style.display = 'block';
+    } else {
+      poolContainer.innerHTML = '<h4>All Placed</h4><div style="font-size:11px;color:var(--text-dim);">Everyone is in the chart.</div>';
+    }
+  }
+}
+
+function orgDragStart(event, id) {
+  orgDragId = id;
+  event.dataTransfer.setData('text/plain', id);
+  event.dataTransfer.effectAllowed = 'move';
+  setTimeout(function() {
+    var el = document.querySelector('[data-id="' + id + '"]');
+    if (el) el.classList.add('dragging');
+  }, 0);
+}
+
+function orgDragEnd(event) {
+  document.querySelectorAll('.dragging').forEach(function(el) { el.classList.remove('dragging'); });
+  document.querySelectorAll('.drop-target').forEach(function(el) { el.classList.remove('drop-target'); });
+  orgDragId = null;
+}
+
+function orgDragOver(event) {
+  var node = event.target.closest('.org-node');
+  if (node && parseInt(node.dataset.id) !== orgDragId) {
+    node.classList.add('drop-target');
+  }
+}
+
+function orgDragLeave(event) {
+  var node = event.target.closest('.org-node');
+  if (node) node.classList.remove('drop-target');
+}
+
+function orgDrop(event, targetId) {
+  var draggedId = parseInt(event.dataTransfer.getData('text/plain'));
+  if (!draggedId || draggedId === targetId) return;
+
+  // Prevent circular: can't drop a parent onto its own descendant
+  if (isDescendant(draggedId, targetId)) return;
+
+  var p = participants.find(function(pp) { return pp.id === draggedId; });
+  if (p) {
+    p.managerId = targetId;
+    saveToStorage();
+    renderOrgChart();
+    populateManagerSelect();
+  }
+}
+
+function orgDropTopLevel(event) {
+  var draggedId = parseInt(event.dataTransfer.getData('text/plain'));
+  if (!draggedId) return;
+  var p = participants.find(function(pp) { return pp.id === draggedId; });
+  if (p) {
+    p.managerId = null;
+    saveToStorage();
+    renderOrgChart();
+    populateManagerSelect();
+  }
+}
+
+function isDescendant(ancestorId, checkId) {
+  // Returns true if checkId is a descendant of ancestorId
+  var visited = {};
+  function walk(id) {
+    if (visited[id]) return false;
+    visited[id] = true;
+    var children = participants.filter(function(p) { return p.managerId === id; });
+    for (var i = 0; i < children.length; i++) {
+      if (children[i].id === checkId) return true;
+      if (walk(children[i].id)) return true;
+    }
+    return false;
+  }
+  return walk(ancestorId);
 }
 
 /* ========================================================
