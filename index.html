@@ -80,6 +80,69 @@
 #appContent { display: none; }
 #appContent.unlocked { display: block; }
 
+/* ===== Admin Panel ===== */
+#adminPanel {
+  position: fixed; inset: 0; z-index: 10000;
+  background: var(--bg);
+  display: none; align-items: center; justify-content: center;
+  flex-direction: column;
+}
+#adminPanel .admin-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 40px;
+  max-width: 520px;
+  width: 90%;
+}
+#adminPanel h2 { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+#adminPanel .admin-sub { color: var(--text-dim); font-size: 13px; margin-bottom: 28px; }
+#adminPanel label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 4px; color: var(--text-dim); }
+#adminPanel input {
+  width: 100%; padding: 10px 14px; background: var(--surface2);
+  border: 1px solid var(--border); border-radius: 6px; color: var(--text);
+  font-size: 14px; margin-bottom: 16px;
+}
+#adminPanel input:focus { outline: none; border-color: var(--accent); }
+#adminPanel .admin-btn {
+  width: 100%; padding: 11px; background: var(--accent); color: #fff;
+  border: none; border-radius: 6px; font-size: 14px; font-weight: 500;
+  cursor: pointer; margin-bottom: 20px;
+}
+#adminPanel .admin-btn:hover { opacity: 0.9; }
+.generated-link-box {
+  display: none; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 16px; margin-bottom: 20px;
+}
+.generated-link-box h4 { font-size: 13px; font-weight: 500; color: var(--accent); margin-bottom: 8px; }
+.generated-link-box .link-display {
+  font-size: 12px; word-break: break-all; color: var(--text);
+  background: var(--bg); border-radius: 4px; padding: 10px;
+  margin-bottom: 10px; font-family: monospace; line-height: 1.5;
+}
+.generated-link-box .copy-btn {
+  padding: 6px 14px; font-size: 12px; background: var(--accent); color: #fff;
+  border: none; border-radius: 4px; cursor: pointer;
+}
+.generated-link-box .copy-btn:hover { opacity: 0.9; }
+.generated-link-box .copy-btn.copied { background: #81c784; }
+.team-list { margin-top: 8px; }
+.team-list h4 { font-size: 13px; font-weight: 500; color: var(--text-dim); margin-bottom: 8px; }
+.team-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px; background: var(--surface2); border-radius: 6px;
+  margin-bottom: 6px; font-size: 13px;
+}
+.team-item .team-name { font-weight: 500; }
+.team-item .team-date { color: var(--text-dim); font-size: 11px; }
+.team-item .team-actions { display: flex; gap: 6px; }
+.team-item .team-actions button {
+  padding: 3px 8px; font-size: 11px; border-radius: 4px;
+  border: none; cursor: pointer;
+}
+.team-item .team-actions .copy-link { background: var(--accent); color: #fff; }
+.team-item .team-actions .remove { background: transparent; color: #e57373; border: 1px solid #e57373; }
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -786,6 +849,25 @@ canvas#enneagramCanvas {
   </div>
 </div>
 
+<!-- ===== Admin Panel (shown when no team hash in URL) ===== -->
+<div id="adminPanel">
+  <div class="admin-box">
+    <h2>Enneagram Team Dashboard</h2>
+    <p class="admin-sub">Create a private dashboard instance for any team. Each team gets a unique link with its own passcode.</p>
+    <label for="adminTeamName">Team Name</label>
+    <input type="text" id="adminTeamName" placeholder="e.g. Customer Support ELT">
+    <label for="adminPasscode">Passcode</label>
+    <input type="text" id="adminPasscode" placeholder="Choose a passcode for this team">
+    <button class="admin-btn" onclick="generateTeamLink()">Generate Team Link</button>
+    <div class="generated-link-box" id="generatedLinkBox">
+      <h4>Team Link Ready</h4>
+      <div class="link-display" id="generatedUrl"></div>
+      <button class="copy-btn" id="copyLinkBtn" onclick="copyTeamLink()">Copy Link</button>
+    </div>
+    <div class="team-list" id="teamListSection"></div>
+  </div>
+</div>
+
 <!-- ===== App Content (hidden until unlocked) ===== -->
 <div id="appContent">
 
@@ -931,22 +1013,55 @@ canvas#enneagramCanvas {
 
 <script>
 /* ========================================================
-   PASSCODE GATE
-   To change the passcode, replace PASSCODE_HASH with the
-   SHA-256 hex digest of your new passcode. Generate one at:
-   terminal: echo -n "yourpasscode" | shasum -a 256
+   URL CONFIG PARSER + ROUTING
+   Two modes based on URL hash:
+   - No hash → Admin panel (create team links)
+   - #team=Name&hash=abc... → Team dashboard with passcode
    ======================================================== */
-var PASSCODE_HASH = '2230f5d9cfad420a32a00e0af5c5060182f90972c1dd18744166ae1f2d563546';
+var TEAM_CONFIG = (function() {
+  var hash = window.location.hash.substring(1);
+  var params = {};
+  hash.split('&').forEach(function(part) {
+    var kv = part.split('=');
+    if (kv.length === 2) params[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1]);
+  });
+  if (params.team && params.hash) {
+    return { teamName: params.team.replace(/-/g, ' '), teamSlug: params.team, passcodeHash: params.hash, isTeamMode: true };
+  }
+  return { isTeamMode: false };
+})();
 
+var STORAGE_PREFIX = TEAM_CONFIG.isTeamMode ? 'enneagram_' + TEAM_CONFIG.teamSlug + '_' : 'enneagram_';
+
+/* ========================================================
+   ROUTING: Show correct view on page load
+   ======================================================== */
+(function() {
+  if (TEAM_CONFIG.isTeamMode) {
+    document.getElementById('adminPanel').style.display = 'none';
+    document.title = 'Enneagram Team Dashboard - ' + TEAM_CONFIG.teamName;
+    document.querySelector('#lockScreen h2').textContent = 'Enneagram Dashboard - ' + TEAM_CONFIG.teamName;
+    document.querySelector('.app-header h1').textContent = 'Enneagram Team Dashboard - ' + TEAM_CONFIG.teamName;
+  } else {
+    document.getElementById('lockScreen').style.display = 'none';
+    document.getElementById('appContent').style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'flex';
+    document.title = 'Enneagram Team Dashboard - Admin';
+  }
+})();
+
+/* ========================================================
+   PASSCODE GATE (team mode only)
+   ======================================================== */
 function verifyPasscode() {
   var input = document.getElementById('passcodeInput').value;
   if (!input) return;
   crypto.subtle.digest('SHA-256', new TextEncoder().encode(input)).then(function(buf) {
     var hash = Array.from(new Uint8Array(buf)).map(function(b) { return b.toString(16).padStart(2,'0'); }).join('');
-    if (hash === PASSCODE_HASH) {
+    if (hash === TEAM_CONFIG.passcodeHash) {
       document.getElementById('lockScreen').style.display = 'none';
       document.getElementById('appContent').classList.add('unlocked');
-      sessionStorage.setItem('enneagram_unlocked', '1');
+      sessionStorage.setItem(STORAGE_PREFIX + 'unlocked', '1');
     } else {
       document.getElementById('lockError').style.display = 'block';
       document.getElementById('passcodeInput').value = '';
@@ -956,9 +1071,99 @@ function verifyPasscode() {
 }
 
 // Auto-unlock if already verified this session
-if (sessionStorage.getItem('enneagram_unlocked') === '1') {
+if (TEAM_CONFIG.isTeamMode && sessionStorage.getItem(STORAGE_PREFIX + 'unlocked') === '1') {
   document.getElementById('lockScreen').style.display = 'none';
   document.getElementById('appContent').classList.add('unlocked');
+}
+
+/* ========================================================
+   ADMIN PANEL (team creation)
+   ======================================================== */
+function generateTeamLink() {
+  var teamName = document.getElementById('adminTeamName').value.trim();
+  var passcode = document.getElementById('adminPasscode').value;
+  if (!teamName) { alert('Please enter a team name.'); return; }
+  if (!passcode) { alert('Please enter a passcode.'); return; }
+
+  var slug = teamName.replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '');
+  crypto.subtle.digest('SHA-256', new TextEncoder().encode(passcode)).then(function(buf) {
+    var hash = Array.from(new Uint8Array(buf)).map(function(b) { return b.toString(16).padStart(2,'0'); }).join('');
+    var baseUrl = window.location.origin + window.location.pathname;
+    var url = baseUrl + '#team=' + encodeURIComponent(slug) + '&hash=' + hash;
+    document.getElementById('generatedUrl').textContent = url;
+    document.getElementById('generatedLinkBox').style.display = 'block';
+
+    // Save to team list
+    var teams = loadAdminTeams();
+    var exists = teams.some(function(t) { return t.slug === slug; });
+    if (!exists) {
+      teams.push({ name: teamName, slug: slug, hash: hash, created: new Date().toISOString().slice(0,10) });
+      localStorage.setItem('enneagram_admin_teams', JSON.stringify(teams));
+    }
+    renderTeamList();
+
+    // Clear form
+    document.getElementById('adminTeamName').value = '';
+    document.getElementById('adminPasscode').value = '';
+  });
+}
+
+function copyTeamLink() {
+  var url = document.getElementById('generatedUrl').textContent;
+  navigator.clipboard.writeText(url).then(function() {
+    var btn = document.getElementById('copyLinkBtn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(function() { btn.textContent = 'Copy Link'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function loadAdminTeams() {
+  try {
+    var saved = localStorage.getItem('enneagram_admin_teams');
+    return saved ? JSON.parse(saved) : [];
+  } catch(e) { return []; }
+}
+
+function renderTeamList() {
+  var teams = loadAdminTeams();
+  var section = document.getElementById('teamListSection');
+  if (teams.length === 0) { section.innerHTML = ''; return; }
+
+  var baseUrl = window.location.origin + window.location.pathname;
+  var html = '<h4>Your Teams</h4>';
+  teams.forEach(function(t, idx) {
+    var url = baseUrl + '#team=' + encodeURIComponent(t.slug) + '&hash=' + t.hash;
+    html += '<div class="team-item">' +
+      '<div><span class="team-name">' + esc(t.name) + '</span><br><span class="team-date">Created ' + t.created + '</span></div>' +
+      '<div class="team-actions">' +
+        '<button class="copy-link" onclick="copyItemLink(\'' + url.replace(/'/g, "\\'") + '\', this)">Copy Link</button>' +
+        '<button class="remove" onclick="removeTeam(' + idx + ')">Remove</button>' +
+      '</div></div>';
+  });
+  section.innerHTML = html;
+}
+
+function copyItemLink(url, btn) {
+  navigator.clipboard.writeText(url).then(function() {
+    btn.textContent = 'Copied!';
+    setTimeout(function() { btn.textContent = 'Copy Link'; }, 1500);
+  });
+}
+
+function removeTeam(idx) {
+  var teams = loadAdminTeams();
+  if (idx >= 0 && idx < teams.length) {
+    if (confirm('Remove "' + teams[idx].name + '" from your team list? (This only removes the link — team data in browsers is not affected.)')) {
+      teams.splice(idx, 1);
+      localStorage.setItem('enneagram_admin_teams', JSON.stringify(teams));
+      renderTeamList();
+    }
+  }
+}
+
+function initAdmin() {
+  renderTeamList();
 }
 
 /* ========================================================
@@ -1599,7 +1804,7 @@ function init() {
 
 function loadFromStorage() {
   try {
-    var saved = localStorage.getItem('enneagram_participants');
+    var saved = localStorage.getItem(STORAGE_PREFIX + 'participants');
     if (saved) {
       participants = JSON.parse(saved);
       nextId = participants.length > 0 ? Math.max.apply(null, participants.map(function(p) { return p.id; })) + 1 : 1;
@@ -1609,7 +1814,7 @@ function loadFromStorage() {
 
 function saveToStorage() {
   try {
-    localStorage.setItem('enneagram_participants', JSON.stringify(participants));
+    localStorage.setItem(STORAGE_PREFIX + 'participants', JSON.stringify(participants));
   } catch(e) { console.error('Failed to save participants', e); }
 }
 
@@ -1997,7 +2202,7 @@ function exportTeam() {
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
   a.href = url;
-  a.download = 'enneagram_team.json';
+  a.download = 'enneagram_' + (TEAM_CONFIG.isTeamMode ? TEAM_CONFIG.teamSlug + '_' : '') + 'team.json';
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -2372,7 +2577,7 @@ function closeFacilitatorModal() {
 
 function loadFacilitatorData() {
   try {
-    var saved = localStorage.getItem('enneagram_facilitator');
+    var saved = localStorage.getItem(STORAGE_PREFIX + 'facilitator');
     return saved ? JSON.parse(saved) : null;
   } catch(e) { return null; }
 }
@@ -2393,7 +2598,7 @@ function saveFacilitator() {
   var wing = detectWing(type, scores);
 
   var fac = { name: name, scores: scores, type: type, wing: wing };
-  localStorage.setItem('enneagram_facilitator', JSON.stringify(fac));
+  localStorage.setItem(STORAGE_PREFIX + 'facilitator', JSON.stringify(fac));
   showFacResult(fac);
 }
 
@@ -2438,6 +2643,34 @@ function esc(str) {
 }
 
 /* ========================================================
+   RHETI PDF VALIDATION
+   ======================================================== */
+function validateRhetiPdf(text) {
+  var markers = 0;
+  if (/RHETI/i.test(text)) markers++;
+  if (/Riso.Hudson/i.test(text)) markers++;
+  if (/Enneagram\s*Institute/i.test(text)) markers++;
+  if (/Test\s*Taker/i.test(text)) markers++;
+  if (/Type\s*\d\s*,\s*The\s+\w+/i.test(text)) markers++;
+  if (markers < 2) {
+    return { valid: false, reason: 'This does not appear to be a RHETI results PDF from The Enneagram Institute. Please upload your official RHETI results.' };
+  }
+  return { valid: true };
+}
+
+function validateScoreSum(scores) {
+  var sum = 0;
+  var count = 0;
+  for (var t = 1; t <= 9; t++) {
+    if (scores[t] !== undefined) { sum += scores[t]; count++; }
+  }
+  if (count === 9 && sum !== 144) {
+    return 'Note: RHETI scores should sum to 144, but these sum to ' + sum + '. Please verify your scores are correct.';
+  }
+  return null;
+}
+
+/* ========================================================
    PDF UPLOAD & PARSING
    ======================================================== */
 function handlePdfUpload(file) {
@@ -2466,6 +2699,13 @@ function handlePdfUpload(file) {
       }
       Promise.all(textPromises).then(function(pages) {
         var fullText = pages.join(' ');
+        var validation = validateRhetiPdf(fullText);
+        if (!validation.valid) {
+          showPdfStatus(validation.reason, 'error');
+          document.getElementById('pdfDropZone').classList.add('error');
+          setTimeout(function() { document.getElementById('pdfDropZone').classList.remove('error'); }, 3000);
+          return;
+        }
         parsePdfScores(fullText);
       });
     }).catch(function(err) {
@@ -2546,7 +2786,10 @@ function parsePdfScores(text) {
       updateWingSelect();
     }
 
-    showPdfStatus('Extracted ' + count + ' scores from PDF. Review and click "Add Participant".', 'success');
+    var sumWarning = validateScoreSum(scores);
+    var msg = 'Extracted ' + count + ' scores from PDF. Review and click "Add Participant".';
+    if (sumWarning) msg += ' ' + sumWarning;
+    showPdfStatus(msg, sumWarning ? 'error' : 'success');
     document.getElementById('pdfDropZone').classList.add('success');
     setTimeout(function() { document.getElementById('pdfDropZone').classList.remove('success'); }, 3000);
   } else {
@@ -2591,6 +2834,11 @@ function handleFacPdfUpload(file) {
       }
       Promise.all(textPromises).then(function(pages) {
         var fullText = pages.join(' ');
+        var validation = validateRhetiPdf(fullText);
+        if (!validation.valid) {
+          showFacPdfStatus(validation.reason, 'error');
+          return;
+        }
         parseFacPdfScores(fullText);
       });
     }).catch(function(err) {
@@ -2646,7 +2894,10 @@ function parseFacPdfScores(text) {
         input.value = scores[t];
       }
     }
-    showFacPdfStatus('Extracted ' + count + ' scores from PDF. Review and click "Save Profile".', 'success');
+    var sumWarning = validateScoreSum(scores);
+    var msg = 'Extracted ' + count + ' scores from PDF. Review and click "Save Profile".';
+    if (sumWarning) msg += ' ' + sumWarning;
+    showFacPdfStatus(msg, sumWarning ? 'error' : 'success');
   } else {
     showFacPdfStatus('Could only find ' + count + ' scores. Please enter scores manually.', 'error');
   }
@@ -2676,7 +2927,11 @@ function updateWingSelect() {
 /* ========================================================
    START
    ======================================================== */
-init();
+if (TEAM_CONFIG.isTeamMode) {
+  init();
+} else {
+  initAdmin();
+}
 </script>
 </body>
 </html>
