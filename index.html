@@ -140,6 +140,12 @@
   padding: 3px 8px; font-size: 11px; border-radius: 4px;
   border: none; cursor: pointer;
 }
+.team-item .team-passcode { font-size: 12px; color: var(--text-dim); }
+.team-item .team-passcode code {
+  background: var(--bg); padding: 1px 6px; border-radius: 3px;
+  font-size: 12px; color: var(--text); letter-spacing: 0.5px;
+}
+.team-item .team-actions .open-link { background: #81c784; color: #1a1d27; font-weight: 500; }
 .team-item .team-actions .copy-link { background: var(--accent); color: #fff; }
 .team-item .team-actions .remove { background: transparent; color: #e57373; border: 1px solid #e57373; }
 
@@ -1114,7 +1120,7 @@ function generateTeamLink() {
     var teams = loadAdminTeams();
     var exists = teams.some(function(t) { return t.slug === slug; });
     if (!exists) {
-      teams.push({ name: teamName, slug: slug, hash: hash, created: new Date().toISOString().slice(0,10) });
+      teams.push({ name: teamName, slug: slug, hash: hash, passcode: passcode, created: new Date().toISOString().slice(0,10) });
       localStorage.setItem('enneagram_admin_teams', JSON.stringify(teams));
     }
     renderTeamList();
@@ -1151,9 +1157,11 @@ function renderTeamList() {
   var html = '<h4>Your Teams</h4>';
   teams.forEach(function(t, idx) {
     var url = baseUrl + '#team=' + encodeURIComponent(t.slug) + '&hash=' + t.hash;
+    var passcodeDisplay = t.passcode ? '<span class="team-passcode">Passcode: <code>' + esc(t.passcode) + '</code></span>' : '<span class="team-passcode" style="color:#e57373;">Passcode not saved</span>';
     html += '<div class="team-item">' +
-      '<div><span class="team-name">' + esc(t.name) + '</span><br><span class="team-date">Created ' + t.created + '</span></div>' +
+      '<div><span class="team-name">' + esc(t.name) + '</span><br>' + passcodeDisplay + '<br><span class="team-date">Created ' + t.created + '</span></div>' +
       '<div class="team-actions">' +
+        '<button class="open-link" onclick="window.open(\'' + url.replace(/'/g, "\\'") + '\', \'_blank\')">Open</button>' +
         '<button class="copy-link" onclick="copyItemLink(\'' + url.replace(/'/g, "\\'") + '\', this)">Copy Link</button>' +
         '<button class="remove" onclick="removeTeam(' + idx + ')">Remove</button>' +
       '</div></div>';
