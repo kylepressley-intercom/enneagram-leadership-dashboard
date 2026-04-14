@@ -872,12 +872,122 @@ canvas#enneagramCanvas {
 .facilitator-result h4 { font-size: 14px; margin-bottom: 8px; }
 .facilitator-result .fac-type { font-size: 16px; font-weight: 600; }
 
-/* ===== Print Styles ===== */
+/* ===== 1:1 Pair Lookup ===== */
+.pair-lookup-section { margin-top: 20px; }
+.pair-selectors { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.pair-selectors select {
+  flex: 1; padding: 6px 8px; font-size: 12px;
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; color: var(--text);
+}
+.pair-selectors select:focus { outline: none; border-color: var(--accent); }
+.pair-arrow { color: var(--text-dim); font-size: 16px; }
+.pair-result-card {
+  background: var(--surface2); border-radius: 8px; padding: 14px; border-left: 3px solid var(--accent);
+}
+.pair-result-card .pair-names { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.pair-result-card .pair-tag { display: inline-block; font-size: 10px; font-weight: 600; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; margin-left: 8px; }
+.pair-result-card .pair-tag.complement { background: rgba(129,199,132,0.2); color: #81c784; }
+.pair-result-card .pair-tag.challenge { background: rgba(255,183,77,0.2); color: #ffb74d; }
+.pair-result-card .pair-tag.growth { background: rgba(108,99,255,0.2); color: #6c63ff; }
+.pair-result-card .pair-tag.stress { background: rgba(229,115,115,0.2); color: #e57373; }
+.pair-result-card .pair-summary { font-size: 13px; color: var(--text); margin: 8px 0; line-height: 1.5; }
+.pair-result-card .pair-tips { margin-top: 10px; }
+.pair-result-card .pair-tip-col h5 { font-size: 11px; color: var(--text-dim); text-transform: uppercase; margin-bottom: 4px; }
+.pair-result-card .pair-tip-col p { font-size: 12px; color: var(--text); line-height: 1.5; margin-bottom: 4px; }
+
+/* ===== Discussion Prompts ===== */
+.prompts-section { margin-top: 20px; }
+.prompt-card {
+  background: var(--surface2); border-radius: 6px; padding: 10px 12px; margin-bottom: 6px;
+  font-size: 13px; line-height: 1.5; border-left: 3px solid var(--accent);
+}
+.prompt-card .prompt-cat { font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--accent); margin-bottom: 3px; }
+
+/* ===== Org Chart ===== */
+.orgchart-container { padding: 24px; max-width: 1200px; margin: 0 auto; }
+.orgchart-container h2 { font-size: 20px; margin-bottom: 4px; }
+.orgchart-sub { color: var(--text-dim); font-size: 13px; margin-bottom: 20px; }
+.org-tree { display: flex; flex-direction: column; align-items: center; }
+.org-level { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; position: relative; }
+.org-branch { display: flex; flex-direction: column; align-items: center; }
+.org-node {
+  background: var(--surface2); border: 2px solid var(--border); border-radius: 8px;
+  padding: 10px 16px; text-align: center; min-width: 120px; cursor: default;
+  transition: border-color 0.2s;
+}
+.org-node:hover { border-color: var(--accent); }
+.org-node .org-name { font-size: 13px; font-weight: 600; }
+.org-node .org-type { font-size: 11px; margin-top: 2px; }
+.org-connector { width: 2px; height: 20px; background: var(--border); margin: 0 auto; }
+.org-hline { display: flex; align-items: flex-start; }
+.org-hline::before {
+  content: ''; display: block; height: 2px; background: var(--border);
+  position: absolute; top: 0;
+}
+.org-children { display: flex; justify-content: center; gap: 16px; padding-top: 8px; position: relative; }
+.org-children::before {
+  content: ''; position: absolute; top: 0; left: 50%; width: 0; height: 0;
+}
+.org-child-branch { display: flex; flex-direction: column; align-items: center; }
+.org-child-branch .org-connector { height: 16px; }
+.org-empty { color: var(--text-dim); font-size: 13px; padding: 40px; text-align: center; }
+
+/* ===== Presentation Mode ===== */
+.pres-overlay {
+  position: fixed; inset: 0; z-index: 20000; background: var(--bg);
+  display: flex; flex-direction: column;
+}
+.pres-controls {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  padding: 12px; background: var(--surface); border-bottom: 1px solid var(--border);
+}
+.pres-controls span { font-size: 13px; color: var(--text-dim); min-width: 60px; text-align: center; }
+.pres-controls button {
+  padding: 6px 16px; font-size: 13px; background: var(--surface2); color: var(--text);
+  border: 1px solid var(--border); border-radius: 4px; cursor: pointer;
+}
+.pres-controls button:hover { border-color: var(--accent); }
+.pres-slide {
+  flex: 1; overflow-y: auto; display: flex; align-items: center; justify-content: center;
+  padding: 40px;
+}
+.pres-slide .pres-content { max-width: 900px; width: 100%; text-align: center; }
+.pres-slide h1 { font-size: 48px; font-weight: 700; margin-bottom: 12px; }
+.pres-slide h2 { font-size: 32px; font-weight: 600; margin-bottom: 20px; }
+.pres-slide .pres-subtitle { font-size: 20px; color: var(--text-dim); margin-bottom: 24px; }
+.pres-slide .pres-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin: 24px 0; }
+.pres-slide .pres-stat { background: var(--surface); border-radius: 8px; padding: 20px; text-align: center; }
+.pres-slide .pres-stat .pres-stat-val { font-size: 36px; font-weight: 700; color: var(--accent); }
+.pres-slide .pres-stat .pres-stat-label { font-size: 14px; color: var(--text-dim); margin-top: 4px; }
+.pres-slide .pres-type-row { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin: 16px 0; }
+.pres-slide .pres-type-chip { padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500; }
+.pres-slide .pres-dynamics-list { text-align: left; max-width: 700px; margin: 0 auto; }
+.pres-slide .pres-prompt-list { text-align: left; max-width: 700px; margin: 0 auto; }
+.pres-slide .pres-prompt-item { background: var(--surface); border-radius: 6px; padding: 12px 16px; margin-bottom: 8px; font-size: 16px; line-height: 1.5; border-left: 3px solid var(--accent); }
+.pres-slide canvas { margin: 0 auto; display: block; }
+
+/* ===== Export Report ===== */
+.export-report { padding: 24px; background: #fff; color: #222; }
+.export-report h1 { font-size: 24px; margin-bottom: 4px; color: #222; }
+.export-report .report-sub { font-size: 14px; color: #666; margin-bottom: 24px; }
+.export-report .report-card {
+  border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 16px;
+  page-break-inside: avoid; break-inside: avoid;
+}
+.export-report .report-card h3 { font-size: 16px; margin-bottom: 4px; }
+.export-report .report-card .report-type { font-size: 14px; margin-bottom: 8px; }
+.export-report .report-card .report-desc { font-size: 13px; line-height: 1.5; color: #444; }
+.export-report .report-card .report-tips { margin-top: 10px; }
+.export-report .report-card .report-tips h4 { font-size: 12px; color: #666; text-transform: uppercase; margin-bottom: 4px; }
+.export-report .report-card .report-tips li { font-size: 13px; line-height: 1.5; color: #444; margin-left: 16px; }
 @media print {
-  body { background: #fff; color: #000; }
-  .page-tabs, .add-form, button, .header-actions, .view-toggle, canvas { display: none; }
-  .guide-type { break-inside: avoid; page-break-inside: avoid; border: 1px solid #ccc; }
-  .guide-box, .guide-wing, .guide-arrow-card { background: #f5f5f5; }
+  body > *:not(.export-report) { display: none !important; }
+  .export-report { display: block !important; }
+}
+
+/* ===== Print Styles (normal) ===== */
+@media screen {
+  .export-report { display: none; }
 }
 
 /* ===== PDF Upload Zone ===== */
@@ -962,6 +1072,8 @@ canvas#enneagramCanvas {
 <header class="app-header">
   <h1>Enneagram Team Dashboard</h1>
   <div class="header-actions">
+    <button class="secondary" onclick="exportReport()">Export Report</button>
+    <button class="secondary" onclick="startPresentation()">Present</button>
     <button class="secondary" onclick="openFacilitatorModal()">My Profile</button>
   </div>
 </header>
@@ -971,6 +1083,7 @@ canvas#enneagramCanvas {
   <div class="page-tab active" data-tab="dashboard" onclick="switchTab('dashboard')">Team Dashboard</div>
   <div class="page-tab" data-tab="guide" onclick="switchTab('guide')">Type Guide</div>
   <div class="page-tab" data-tab="profiles" onclick="switchTab('profiles')">Score Profiles</div>
+  <div class="page-tab" data-tab="orgchart" onclick="switchTab('orgchart')">Org Chart</div>
 </nav>
 
 <!-- ===== Tab 1: Team Dashboard ===== -->
@@ -991,6 +1104,11 @@ canvas#enneagramCanvas {
         <label for="pWing">Wing</label>
         <select id="pWing">
           <option value="">-- Auto-detect --</option>
+        </select>
+
+        <label for="pManager">Reports to</label>
+        <select id="pManager">
+          <option value="">-- None (top level) --</option>
         </select>
 
         <span class="scores-toggle" onclick="toggleScores()">Enter RHETI Scores</span>
@@ -1045,6 +1163,21 @@ canvas#enneagramCanvas {
         <h3>Active Team Dynamics</h3>
         <div id="dynamicsCards"></div>
       </div>
+
+      <div class="pair-lookup-section">
+        <h3>1:1 Pair Lookup</h3>
+        <div class="pair-selectors">
+          <select id="pairA" onchange="renderPairLookup()"><option value="">Select person...</option></select>
+          <span class="pair-arrow">&harr;</span>
+          <select id="pairB" onchange="renderPairLookup()"><option value="">Select person...</option></select>
+        </div>
+        <div id="pairResult"></div>
+      </div>
+
+      <div class="prompts-section">
+        <h3>Discussion Prompts</h3>
+        <div id="discussionPrompts"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1054,6 +1187,15 @@ canvas#enneagramCanvas {
   <div class="guide-container">
     <nav class="guide-nav" id="guideNav"></nav>
     <div id="guideContent"></div>
+  </div>
+</div>
+
+<!-- ===== Tab 4: Org Chart ===== -->
+<div class="tab-content" id="tab-orgchart">
+  <div class="orgchart-container">
+    <h2>Organization Chart</h2>
+    <p class="orgchart-sub">Set "Reports to" when adding participants to build the hierarchy.</p>
+    <div id="orgChartTree"></div>
   </div>
 </div>
 
@@ -1097,6 +1239,20 @@ canvas#enneagramCanvas {
     </div>
   </div>
 </div>
+
+<!-- ===== Presentation Mode Overlay ===== -->
+<div id="presentationOverlay" class="pres-overlay" style="display:none;">
+  <div class="pres-controls">
+    <span id="presSlideNum">1 / 5</span>
+    <button onclick="presNav(-1)">&#9664; Prev</button>
+    <button onclick="presNav(1)">Next &#9654;</button>
+    <button onclick="endPresentation()">Exit</button>
+  </div>
+  <div class="pres-slide" id="presSlide"></div>
+</div>
+
+<!-- ===== Export Report (hidden, used for printing) ===== -->
+<div id="exportReportContent" class="export-report" style="display:none;"></div>
 
 </div><!-- end #appContent -->
 
@@ -2132,6 +2288,7 @@ function switchTab(tab) {
   document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.toggle('active', c.id === 'tab-' + tab); });
   if (tab === 'profiles') renderProfiles();
   if (tab === 'dashboard') drawEnneagram();
+  if (tab === 'orgchart') renderOrgChart();
 }
 
 /* ========================================================
@@ -2191,6 +2348,8 @@ function addParticipant() {
 
   var typeVal = document.getElementById('pType').value;
   var wingVal = document.getElementById('pWing').value;
+  var managerVal = document.getElementById('pManager').value;
+  var managerId = managerVal ? parseInt(managerVal) : null;
   var scores = null;
 
   if (scoresVisible) {
@@ -2221,18 +2380,19 @@ function addParticipant() {
   if (editingId !== null) {
     // Update existing participant
     var p = participants.find(function(p) { return p.id === editingId; });
-    if (p) { p.name = name; p.type = type; p.wing = wing; p.scores = scores; }
+    if (p) { p.name = name; p.type = type; p.wing = wing; p.scores = scores; p.managerId = managerId; }
     editingId = null;
     document.getElementById('formTitle').textContent = 'Add Participant';
     document.getElementById('submitBtn').textContent = 'Add Participant';
     document.getElementById('cancelEditBtn').style.display = 'none';
   } else {
-    participants.push({ id: nextId++, name: name, type: type, wing: wing, scores: scores });
+    participants.push({ id: nextId++, name: name, type: type, wing: wing, scores: scores, managerId: managerId });
   }
   saveToStorage();
 
   document.getElementById('pName').value = '';
   document.getElementById('pType').value = '';
+  document.getElementById('pManager').value = '';
   updateWingSelect();
   for (var j = 1; j <= 9; j++) {
     var el = document.getElementById('score_' + j);
@@ -2269,6 +2429,7 @@ function editParticipant(id) {
   document.getElementById('pType').value = p.type;
   updateWingSelect();
   if (p.wing) document.getElementById('pWing').value = p.wing;
+  document.getElementById('pManager').value = p.managerId || '';
 
   if (p.scores) {
     if (!scoresVisible) toggleScores();
@@ -2289,6 +2450,7 @@ function cancelEdit() {
   editingId = null;
   document.getElementById('pName').value = '';
   document.getElementById('pType').value = '';
+  document.getElementById('pManager').value = '';
   updateWingSelect();
   for (var i = 1; i <= 9; i++) {
     var el = document.getElementById('score_' + i);
@@ -2414,6 +2576,9 @@ function render() {
   drawEnneagram();
   renderTypeCards();
   renderDynamics();
+  populatePairSelectors();
+  renderDiscussionPrompts();
+  populateManagerSelect();
 }
 
 function renderParticipantList() {
@@ -3400,6 +3565,434 @@ function updateWingSelect() {
       wingSel.innerHTML += '<option value="' + w + '">w' + w + ' (' + EXTENDED_TYPE_DATA[w].name + ')</option>';
     });
   }
+}
+
+/* ========================================================
+   1:1 PAIR LOOKUP
+   ======================================================== */
+function populatePairSelectors() {
+  var selA = document.getElementById('pairA');
+  var selB = document.getElementById('pairB');
+  if (!selA || !selB) return;
+  var valA = selA.value, valB = selB.value;
+  selA.innerHTML = '<option value="">Select person...</option>';
+  selB.innerHTML = '<option value="">Select person...</option>';
+  participants.forEach(function(p) {
+    var opt = '<option value="' + p.id + '">' + esc(p.name) + ' (Type ' + p.type + ')</option>';
+    selA.innerHTML += opt;
+    selB.innerHTML += opt;
+  });
+  selA.value = valA;
+  selB.value = valB;
+}
+
+function renderPairLookup() {
+  var container = document.getElementById('pairResult');
+  if (!container) return;
+  var idA = parseInt(document.getElementById('pairA').value);
+  var idB = parseInt(document.getElementById('pairB').value);
+  if (!idA || !idB || idA === idB) { container.innerHTML = ''; return; }
+
+  var pA = participants.find(function(p) { return p.id === idA; });
+  var pB = participants.find(function(p) { return p.id === idB; });
+  if (!pA || !pB) { container.innerHTML = ''; return; }
+
+  var a = Math.min(pA.type, pB.type), b = Math.max(pA.type, pB.type);
+  var key = a + '-' + b;
+  var dyn = PAIR_DYNAMICS[key];
+  var tdA = EXTENDED_TYPE_DATA[pA.type], tdB = EXTENDED_TYPE_DATA[pB.type];
+
+  var html = '<div class="pair-result-card">';
+  html += '<div class="pair-names"><span style="color:' + tdA.color + '">' + esc(pA.name) + '</span> &harr; <span style="color:' + tdB.color + '">' + esc(pB.name) + '</span>';
+  if (dyn) html += '<span class="pair-tag ' + dyn.tag + '">' + dyn.tag + '</span>';
+  html += '</div>';
+
+  if (dyn) {
+    html += '<div class="pair-summary">' + esc(dyn.summary) + '</div>';
+  }
+
+  html += '<div class="pair-tips">';
+  html += '<div class="pair-tip-col"><h5>' + esc(pA.name) + ' (Type ' + pA.type + ') — Communication</h5>';
+  html += '<p>' + esc(tdA.communicationStyle || '') + '</p></div>';
+  html += '<div class="pair-tip-col"><h5>' + esc(pB.name) + ' (Type ' + pB.type + ') — Communication</h5>';
+  html += '<p>' + esc(tdB.communicationStyle || '') + '</p></div>';
+  html += '<div class="pair-tip-col" style="margin-top:8px;"><h5>' + esc(pA.name) + ' — Conflict Style</h5>';
+  html += '<p>' + esc(tdA.conflictStyle || '') + '</p></div>';
+  html += '<div class="pair-tip-col" style="margin-top:8px;"><h5>' + esc(pB.name) + ' — Conflict Style</h5>';
+  html += '<p>' + esc(tdB.conflictStyle || '') + '</p></div>';
+  html += '</div></div>';
+  container.innerHTML = html;
+}
+
+/* ========================================================
+   DISCUSSION PROMPTS
+   ======================================================== */
+function renderDiscussionPrompts() {
+  var container = document.getElementById('discussionPrompts');
+  if (!container) return;
+  if (participants.length < 2) {
+    container.innerHTML = '<div style="color:var(--text-dim);font-size:13px;">Add at least two participants to see discussion prompts.</div>';
+    return;
+  }
+
+  var prompts = [];
+  var typeCounts = {};
+  var triadCounts = { thinking: 0, feeling: 0, instinctive: 0 };
+  participants.forEach(function(p) {
+    typeCounts[p.type] = (typeCounts[p.type] || 0) + 1;
+    var td = EXTENDED_TYPE_DATA[p.type];
+    if (td) triadCounts[td.triad]++;
+  });
+
+  // Missing types
+  var missing = [];
+  for (var i = 1; i <= 9; i++) { if (!typeCounts[i]) missing.push(i); }
+  if (missing.length > 0 && missing.length <= 5) {
+    var names = missing.map(function(t) { return 'Type ' + t + ' (' + EXTENDED_TYPE_DATA[t].name + ')'; });
+    prompts.push({ cat: 'Blind Spots', text: 'Your team is missing ' + names.join(', ') + '. What perspectives might be absent from your discussions? How could you compensate?' });
+  }
+
+  // Dominant types
+  var total = participants.length;
+  for (var t in typeCounts) {
+    if (typeCounts[t] >= 2 && typeCounts[t] / total >= 0.3) {
+      var td2 = EXTENDED_TYPE_DATA[t];
+      prompts.push({ cat: 'Concentration', text: typeCounts[t] + ' of ' + total + ' team members are Type ' + t + ' (' + td2.name + '). How does this concentration shape your team culture? What are the strengths and risks?' });
+    }
+  }
+
+  // Triad imbalance
+  var totalTriad = triadCounts.thinking + triadCounts.feeling + triadCounts.instinctive;
+  var dominant = null, weak = null;
+  ['thinking', 'feeling', 'instinctive'].forEach(function(tr) {
+    if (triadCounts[tr] / totalTriad >= 0.5) dominant = tr;
+    if (triadCounts[tr] === 0) weak = tr;
+  });
+  if (dominant) {
+    var trName = TRIAD_INFO[dominant].name;
+    prompts.push({ cat: 'Triad Balance', text: 'Your team skews heavily toward the ' + trName + ' center. How might this affect decision-making? What\'s your strategy when you need the other centers\' strengths?' });
+  }
+  if (weak) {
+    var wkName = TRIAD_INFO[weak].name;
+    prompts.push({ cat: 'Triad Gap', text: 'No one on the team leads from the ' + wkName + ' center. How do you bring that intelligence into critical conversations?' });
+  }
+
+  // Growth and stress patterns
+  var hasGrowthPair = false, hasStressPair = false;
+  var types = Object.keys(typeCounts).map(Number);
+  for (var x = 0; x < types.length; x++) {
+    for (var y = x + 1; y < types.length; y++) {
+      var k = Math.min(types[x], types[y]) + '-' + Math.max(types[x], types[y]);
+      var d = PAIR_DYNAMICS[k];
+      if (d && d.tag === 'growth') hasGrowthPair = true;
+      if (d && d.tag === 'stress') hasStressPair = true;
+    }
+  }
+  if (hasGrowthPair) {
+    prompts.push({ cat: 'Growth', text: 'Your team includes types connected by growth arrows. How do you leverage these natural mentoring relationships? When have you seen a teammate step into their growth direction?' });
+  }
+  if (hasStressPair) {
+    prompts.push({ cat: 'Stress', text: 'Some team members are connected by stress arrows. During high-pressure periods, how do you support each other? What early signs of stress do you watch for?' });
+  }
+
+  // Assertive vs. withdrawn
+  var assertive = 0, withdrawn = 0;
+  participants.forEach(function(p) {
+    if ([3, 7, 8].indexOf(p.type) >= 0) assertive++;
+    if ([4, 5, 9].indexOf(p.type) >= 0) withdrawn++;
+  });
+  if (assertive >= 3 && withdrawn === 0) {
+    prompts.push({ cat: 'Dynamics', text: 'Your team has strong assertive energy (Types 3, 7, 8) but no withdrawn types. How do you create space for reflection and deeper processing before acting?' });
+  }
+  if (withdrawn >= 3 && assertive === 0) {
+    prompts.push({ cat: 'Dynamics', text: 'Your team has strong withdrawn energy (Types 4, 5, 9). How do you ensure ideas move from discussion to action? Who drives momentum?' });
+  }
+
+  // General always-useful prompts
+  prompts.push({ cat: 'Reflection', text: 'Think about a recent team conflict. Looking at the Enneagram types involved, what deeper motivations might have been at play beyond the surface disagreement?' });
+  prompts.push({ cat: 'Action', text: 'Based on your team\'s composition, what is one concrete thing each person could do this week to leverage their type\'s strength for the team?' });
+
+  var html = '';
+  prompts.forEach(function(p) {
+    html += '<div class="prompt-card"><div class="prompt-cat">' + esc(p.cat) + '</div>' + esc(p.text) + '</div>';
+  });
+  container.innerHTML = html;
+}
+
+/* ========================================================
+   ORG CHART
+   ======================================================== */
+function populateManagerSelect() {
+  var sel = document.getElementById('pManager');
+  if (!sel) return;
+  var val = sel.value;
+  sel.innerHTML = '<option value="">-- None (top level) --</option>';
+  participants.forEach(function(p) {
+    sel.innerHTML += '<option value="' + p.id + '">' + esc(p.name) + '</option>';
+  });
+  sel.value = val;
+}
+
+function renderOrgChart() {
+  var container = document.getElementById('orgChartTree');
+  if (!container) return;
+  if (participants.length === 0) {
+    container.innerHTML = '<div class="org-empty">Add participants and set "Reports to" relationships to build the org chart.</div>';
+    return;
+  }
+
+  // Build tree structure
+  var childrenOf = {};
+  var hasManager = {};
+  participants.forEach(function(p) {
+    var mgr = p.managerId || 0;
+    if (!childrenOf[mgr]) childrenOf[mgr] = [];
+    childrenOf[mgr].push(p);
+    if (mgr) hasManager[p.id] = true;
+  });
+
+  // Roots = participants with no manager
+  var roots = participants.filter(function(p) { return !p.managerId; });
+
+  if (roots.length === 0) {
+    container.innerHTML = '<div class="org-empty">No top-level participants found. Make sure at least one person has "Reports to" set to "None".</div>';
+    return;
+  }
+
+  function buildNode(person) {
+    var td = EXTENDED_TYPE_DATA[person.type] || {};
+    var wingStr = person.wing ? 'w' + person.wing : '';
+    var children = childrenOf[person.id] || [];
+
+    var html = '<div class="org-branch">';
+    html += '<div class="org-node" style="border-color:' + (td.color || 'var(--border)') + '">';
+    html += '<div class="org-name">' + esc(person.name) + '</div>';
+    html += '<div class="org-type" style="color:' + (td.color || 'var(--text-dim)') + '">Type ' + person.type + wingStr + ' — ' + (td.name || '') + '</div>';
+    html += '</div>';
+
+    if (children.length > 0) {
+      html += '<div class="org-connector"></div>';
+      html += '<div class="org-children">';
+      children.forEach(function(child) {
+        html += '<div class="org-child-branch">';
+        html += '<div class="org-connector"></div>';
+        html += buildNode(child);
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  var html = '<div class="org-tree">';
+  if (roots.length === 1) {
+    html += buildNode(roots[0]);
+  } else {
+    html += '<div class="org-children">';
+    roots.forEach(function(r) {
+      html += '<div class="org-child-branch">' + buildNode(r) + '</div>';
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+/* ========================================================
+   PRESENTATION MODE
+   ======================================================== */
+var presSlides = [];
+var presIndex = 0;
+
+function buildPresSlides() {
+  presSlides = [];
+
+  // Slide 1: Title
+  presSlides.push(function() {
+    return '<div class="pres-content"><h1>Enneagram Team Dashboard</h1>' +
+      '<div class="pres-subtitle">' + esc(TEAM_CONFIG.teamName || 'Team Session') + '</div>' +
+      '<div class="pres-subtitle" style="font-size:16px;opacity:0.5;">' + participants.length + ' team members</div></div>';
+  });
+
+  // Slide 2: Team overview stats
+  presSlides.push(function() {
+    var typesPresent = new Set(participants.map(function(p) { return p.type; }));
+    var typeCounts = {};
+    participants.forEach(function(p) { typeCounts[p.type] = (typeCounts[p.type] || 0) + 1; });
+    var mostCommon = '-', maxCount = 0;
+    for (var t in typeCounts) {
+      if (typeCounts[t] > maxCount) { maxCount = typeCounts[t]; mostCommon = 'Type ' + t + ' (' + EXTENDED_TYPE_DATA[t].name + ')'; }
+    }
+    return '<div class="pres-content"><h2>Team Overview</h2>' +
+      '<div class="pres-stat-grid">' +
+      '<div class="pres-stat"><div class="pres-stat-val">' + participants.length + '</div><div class="pres-stat-label">Team Members</div></div>' +
+      '<div class="pres-stat"><div class="pres-stat-val">' + typesPresent.size + '/9</div><div class="pres-stat-label">Types Represented</div></div>' +
+      '<div class="pres-stat"><div class="pres-stat-val">' + mostCommon + '</div><div class="pres-stat-label">Most Common</div></div>' +
+      '</div></div>';
+  });
+
+  // Slide 3: Enneagram diagram
+  presSlides.push(function() {
+    var canvas = document.createElement('canvas');
+    canvas.width = 1040; canvas.height = 1040;
+    canvas.style.width = '520px'; canvas.style.height = '520px';
+    // Draw into the presentation slide after it's in the DOM
+    setTimeout(function() {
+      var c = document.getElementById('presCanvas');
+      if (c) {
+        var ctx = c.getContext('2d');
+        var srcCanvas = document.getElementById('enneagramCanvas');
+        if (srcCanvas) ctx.drawImage(srcCanvas, 0, 0);
+      }
+    }, 50);
+    return '<div class="pres-content"><h2>Team Distribution</h2>' +
+      '<canvas id="presCanvas" width="1040" height="1040" style="width:520px;height:520px;"></canvas></div>';
+  });
+
+  // Slide 4: Type breakdown chips
+  presSlides.push(function() {
+    var typeCounts = {};
+    participants.forEach(function(p) { typeCounts[p.type] = (typeCounts[p.type] || 0) + 1; });
+    var chips = '';
+    for (var t = 1; t <= 9; t++) {
+      var td = EXTENDED_TYPE_DATA[t];
+      var count = typeCounts[t] || 0;
+      var opacity = count > 0 ? '1' : '0.3';
+      chips += '<div class="pres-type-chip" style="background:' + td.color + '22;color:' + td.color + ';border:1px solid ' + td.color + '44;opacity:' + opacity + '">Type ' + t + ': ' + td.name + (count > 0 ? ' (' + count + ')' : '') + '</div>';
+    }
+    // List names per type
+    var details = '';
+    for (var t2 = 1; t2 <= 9; t2++) {
+      var members = participants.filter(function(p) { return p.type === t2; });
+      if (members.length > 0) {
+        var td2 = EXTENDED_TYPE_DATA[t2];
+        details += '<div style="margin:8px 0;text-align:left;"><span style="color:' + td2.color + ';font-weight:600;">Type ' + t2 + ':</span> ' + members.map(function(p) { return esc(p.name); }).join(', ') + '</div>';
+      }
+    }
+    return '<div class="pres-content"><h2>Type Breakdown</h2><div class="pres-type-row">' + chips + '</div><div style="max-width:600px;margin:16px auto;font-size:16px;">' + details + '</div></div>';
+  });
+
+  // Slide 5: Key dynamics
+  presSlides.push(function() {
+    var typeSet = {};
+    participants.forEach(function(p) { typeSet[p.type] = true; });
+    var types = Object.keys(typeSet).map(Number).sort(function(a, b) { return a - b; });
+    var dynHtml = '';
+    for (var i = 0; i < types.length; i++) {
+      for (var j = i + 1; j < types.length; j++) {
+        var k = types[i] + '-' + types[j];
+        var d = PAIR_DYNAMICS[k];
+        if (d) {
+          dynHtml += '<div style="background:var(--surface);padding:10px 14px;border-radius:6px;margin-bottom:8px;border-left:3px solid ' +
+            (d.tag === 'complement' ? '#81c784' : d.tag === 'growth' ? '#6c63ff' : d.tag === 'stress' ? '#e57373' : '#ffb74d') +
+            ';text-align:left;"><strong>Type ' + types[i] + ' &harr; Type ' + types[j] + '</strong> <span style="font-size:11px;opacity:0.7;">(' + d.tag + ')</span><br><span style="font-size:14px;">' + esc(d.summary) + '</span></div>';
+        }
+      }
+    }
+    if (!dynHtml) dynHtml = '<div style="color:var(--text-dim);">No dynamics data available.</div>';
+    return '<div class="pres-content"><h2>Key Dynamics</h2><div class="pres-dynamics-list">' + dynHtml + '</div></div>';
+  });
+
+  // Slide 6: Discussion prompts
+  presSlides.push(function() {
+    var promptContainer = document.getElementById('discussionPrompts');
+    var items = promptContainer ? promptContainer.querySelectorAll('.prompt-card') : [];
+    var html = '';
+    for (var i = 0; i < items.length && i < 6; i++) {
+      html += '<div class="pres-prompt-item">' + items[i].innerHTML + '</div>';
+    }
+    if (!html) html = '<div style="color:var(--text-dim);">No prompts generated yet.</div>';
+    return '<div class="pres-content"><h2>Discussion Prompts</h2><div class="pres-prompt-list">' + html + '</div></div>';
+  });
+}
+
+function startPresentation() {
+  if (participants.length === 0) { alert('Add participants before presenting.'); return; }
+  renderDiscussionPrompts();
+  buildPresSlides();
+  presIndex = 0;
+  document.getElementById('presentationOverlay').style.display = 'flex';
+  showPresSlide();
+  document.addEventListener('keydown', presKeyHandler);
+}
+
+function endPresentation() {
+  document.getElementById('presentationOverlay').style.display = 'none';
+  document.removeEventListener('keydown', presKeyHandler);
+}
+
+function presNav(dir) {
+  presIndex = Math.max(0, Math.min(presSlides.length - 1, presIndex + dir));
+  showPresSlide();
+}
+
+function showPresSlide() {
+  document.getElementById('presSlide').innerHTML = presSlides[presIndex]();
+  document.getElementById('presSlideNum').textContent = (presIndex + 1) + ' / ' + presSlides.length;
+}
+
+function presKeyHandler(e) {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); presNav(1); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); presNav(-1); }
+  else if (e.key === 'Escape') { endPresentation(); }
+}
+
+/* ========================================================
+   EXPORT TAKEAWAY REPORT
+   ======================================================== */
+function exportReport() {
+  if (participants.length === 0) { alert('Add participants before exporting.'); return; }
+
+  var teamName = TEAM_CONFIG.isTeamMode ? TEAM_CONFIG.teamName : 'Team';
+  var html = '<h1>Enneagram Team Report — ' + esc(teamName) + '</h1>';
+  html += '<div class="report-sub">' + participants.length + ' team members &middot; Generated ' + new Date().toLocaleDateString() + '</div>';
+
+  participants.forEach(function(p) {
+    var td = EXTENDED_TYPE_DATA[p.type] || {};
+    var wingStr = p.wing ? 'w' + p.wing : '';
+    html += '<div class="report-card">';
+    html += '<h3 style="color:' + (td.color || '#666') + '">' + esc(p.name) + '</h3>';
+    html += '<div class="report-type">Type ' + p.type + wingStr + ': ' + (td.name || '') + ' — ' + (td.subtitle || '') + '</div>';
+    html += '<div class="report-desc">' + esc(td.desc || '') + '</div>';
+
+    if (td.communicationStyle) {
+      html += '<div class="report-tips"><h4>Communication Style</h4><p style="font-size:13px;color:#444;">' + esc(td.communicationStyle) + '</p></div>';
+    }
+    if (td.workStyle) {
+      html += '<div class="report-tips"><h4>Work Style</h4><p style="font-size:13px;color:#444;">' + esc(td.workStyle) + '</p></div>';
+    }
+    if (td.collaborationTips && td.collaborationTips.length > 0) {
+      html += '<div class="report-tips"><h4>Collaboration Tips</h4><ul>';
+      td.collaborationTips.forEach(function(tip) { html += '<li>' + esc(tip) + '</li>'; });
+      html += '</ul></div>';
+    }
+
+    // Dynamics with other team members
+    var dynamics = [];
+    participants.forEach(function(other) {
+      if (other.id === p.id) return;
+      var a = Math.min(p.type, other.type), b = Math.max(p.type, other.type);
+      var dyn = PAIR_DYNAMICS[a + '-' + b];
+      if (dyn) {
+        dynamics.push({ name: other.name, type: other.type, summary: dyn.summary, tag: dyn.tag });
+      }
+    });
+    if (dynamics.length > 0) {
+      html += '<div class="report-tips"><h4>Team Dynamics</h4><ul>';
+      dynamics.forEach(function(d) {
+        html += '<li><strong>' + esc(d.name) + ' (Type ' + d.type + ')</strong>: ' + esc(d.summary) + '</li>';
+      });
+      html += '</ul></div>';
+    }
+    html += '</div>';
+  });
+
+  var reportEl = document.getElementById('exportReportContent');
+  reportEl.innerHTML = html;
+  reportEl.style.display = 'block';
+  window.print();
+  setTimeout(function() { reportEl.style.display = 'none'; }, 500);
 }
 
 /* ========================================================
