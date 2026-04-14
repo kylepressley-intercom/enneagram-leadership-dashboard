@@ -3787,9 +3787,9 @@ function renderOrgChart() {
   });
 
   // Roots = participants with no manager who have reports, or all top-level if any have managers set
-  var anyHierarchy = participants.some(function(p) { return p.managerId; });
-  var roots = participants.filter(function(p) { return !p.managerId && (hasReports[p.id] || anyHierarchy); });
-  var poolPeople = anyHierarchy ? participants.filter(function(p) { return !p.managerId && !hasReports[p.id]; }) : participants;
+  var anyHierarchy = participants.some(function(p) { return p.managerId || p.isTopLevel; });
+  var roots = participants.filter(function(p) { return !p.managerId && (hasReports[p.id] || p.isTopLevel); });
+  var poolPeople = anyHierarchy ? participants.filter(function(p) { return !p.managerId && !hasReports[p.id] && !p.isTopLevel; }) : participants;
 
   // If no hierarchy exists yet, show everyone in the pool
   if (!anyHierarchy) {
@@ -3905,6 +3905,7 @@ function orgDrop(event, targetId) {
   var p = participants.find(function(pp) { return pp.id === draggedId; });
   if (p) {
     p.managerId = targetId;
+    p.isTopLevel = false;
     saveToStorage();
     renderOrgChart();
     populateManagerSelect();
@@ -3917,6 +3918,7 @@ function orgDropTopLevel(event) {
   var p = participants.find(function(pp) { return pp.id === draggedId; });
   if (p) {
     p.managerId = null;
+    p.isTopLevel = true;
     saveToStorage();
     renderOrgChart();
     populateManagerSelect();
