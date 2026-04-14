@@ -326,6 +326,22 @@ button.small { padding: 4px 10px; font-size: 12px; }
   color: #e53935;
   background: rgba(229,57,53,0.1);
 }
+.participant-item .edit-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 2px 6px;
+  font-size: 12px;
+  line-height: 1;
+  border-radius: 4px;
+}
+.participant-item .edit-btn:hover {
+  color: var(--accent);
+  background: rgba(108,99,255,0.1);
+}
+.participant-item .p-actions { display: flex; gap: 2px; }
+.participant-item.editing { border: 1px solid var(--accent); }
 
 /* ===== Team Stats ===== */
 .stat-card {
@@ -891,7 +907,7 @@ canvas#enneagramCanvas {
   <div class="dashboard-layout">
     <!-- Left Panel -->
     <div class="panel" id="left-panel">
-      <h3>Add Participant</h3>
+      <h3 id="formTitle">Add Participant</h3>
       <div class="add-form">
         <label for="pName">Name</label>
         <input type="text" id="pName" placeholder="Enter name...">
@@ -917,7 +933,8 @@ canvas#enneagramCanvas {
         </div>
         <div id="pdfStatus" style="display:none;font-size:12px;padding:6px 0;color:var(--accent);"></div>
 
-        <button onclick="addParticipant()">Add Participant</button>
+        <button id="submitBtn" onclick="addParticipant()">Add Participant</button>
+        <button id="cancelEditBtn" class="secondary" onclick="cancelEdit()" style="display:none;margin-top:6px;">Cancel Edit</button>
       </div>
 
       <h3>Participants</h3>
@@ -1788,6 +1805,7 @@ var nextId = 1;
 var currentView = 'distribution';
 var expandedCard = null;
 var scoresVisible = false;
+var editingId = null;
 
 /* ========================================================
    INITIALIZATION
@@ -1912,7 +1930,17 @@ function addParticipant() {
     wing = detectWing(type, scores);
   }
 
-  participants.push({ id: nextId++, name: name, type: type, wing: wing, scores: scores });
+  if (editingId !== null) {
+    // Update existing participant
+    var p = participants.find(function(p) { return p.id === editingId; });
+    if (p) { p.name = name; p.type = type; p.wing = wing; p.scores = scores; }
+    editingId = null;
+    document.getElementById('formTitle').textContent = 'Add Participant';
+    document.getElementById('submitBtn').textContent = 'Add Participant';
+    document.getElementById('cancelEditBtn').style.display = 'none';
+  } else {
+    participants.push({ id: nextId++, name: name, type: type, wing: wing, scores: scores });
+  }
   saveToStorage();
 
   document.getElementById('pName').value = '';
@@ -1944,7 +1972,48 @@ function detectWing(type, scores) {
   return wings[0];
 }
 
+function editParticipant(id) {
+  var p = participants.find(function(p) { return p.id === id; });
+  if (!p) return;
+
+  editingId = id;
+  document.getElementById('pName').value = p.name;
+  document.getElementById('pType').value = p.type;
+  updateWingSelect();
+  if (p.wing) document.getElementById('pWing').value = p.wing;
+
+  if (p.scores) {
+    if (!scoresVisible) toggleScores();
+    for (var i = 1; i <= 9; i++) {
+      var el = document.getElementById('score_' + i);
+      if (el) el.value = p.scores[i] || '';
+    }
+  }
+
+  document.getElementById('formTitle').textContent = 'Edit Participant';
+  document.getElementById('submitBtn').textContent = 'Save Changes';
+  document.getElementById('cancelEditBtn').style.display = 'block';
+  document.getElementById('pName').focus();
+  renderParticipantList();
+}
+
+function cancelEdit() {
+  editingId = null;
+  document.getElementById('pName').value = '';
+  document.getElementById('pType').value = '';
+  updateWingSelect();
+  for (var i = 1; i <= 9; i++) {
+    var el = document.getElementById('score_' + i);
+    if (el) el.value = '';
+  }
+  document.getElementById('formTitle').textContent = 'Add Participant';
+  document.getElementById('submitBtn').textContent = 'Add Participant';
+  document.getElementById('cancelEditBtn').style.display = 'none';
+  renderParticipantList();
+}
+
 function removeParticipant(id) {
+  if (editingId === id) cancelEdit();
   participants = participants.filter(function(p) { return p.id !== id; });
   saveToStorage();
   render();
@@ -1971,7 +2040,8 @@ function renderParticipantList() {
   container.innerHTML = participants.map(function(p) {
     var td = EXTENDED_TYPE_DATA[p.type];
     var wingStr = p.wing ? 'w' + p.wing : '';
-    return '<div class="participant-item"><div class="p-info"><span class="type-dot" style="background:' + td.color + '"></span><span>' + esc(p.name) + '</span><span style="color:var(--text-dim);font-size:12px;">' + p.type + wingStr + '</span></div><button class="remove-btn" onclick="removeParticipant(' + p.id + ')" title="Remove">&times;</button></div>';
+    var isEditing = editingId === p.id ? ' editing' : '';
+    return '<div class="participant-item' + isEditing + '"><div class="p-info"><span class="type-dot" style="background:' + td.color + '"></span><span>' + esc(p.name) + '</span><span style="color:var(--text-dim);font-size:12px;">' + p.type + wingStr + '</span></div><div class="p-actions"><button class="edit-btn" onclick="editParticipant(' + p.id + ')" title="Edit">&#9998;</button><button class="remove-btn" onclick="removeParticipant(' + p.id + ')" title="Remove">&times;</button></div></div>';
   }).join('');
 }
 
